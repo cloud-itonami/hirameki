@@ -103,7 +103,7 @@
      "One harvest tick against a corpus journal. Returns a summary map.
 
      opts:
-       :journal-path  corpus journal file (required)
+       :journal-dir   corpus journal directory (required)
        :seeds         current seed vector (required)
        :state         current state map (required)
        :policy        merged over `default-policy`
@@ -113,11 +113,11 @@
      Returns `{:seeds :state :quads :new? :patent-id :citations :reason}`.
      Writes the journal; does NOT write seeds/state/git — the caller does, so a
      failed write cannot leave the cursor ahead of the data."
-     [{:keys [journal-path seeds state policy retrieved-at]}]
+     [{:keys [journal-dir seeds state policy retrieved-at]}]
      (let [policy (merge default-policy policy)]
        (if-let [{:keys [seed index]} (next-seed state seeds)]
          (let [pid (:query seed)
-               existing (quad/read-journal journal-path)
+               existing (quad/read-sharded journal-dir "google-patents")
                known (quad/entities existing)
                rec (try (gp/lookup pid)
                         (catch Exception e
@@ -142,7 +142,9 @@
 
              :else
              (let [quads (gp/->quads (quad/next-tx existing) retrieved-at rec)]
-               (quad/append-journal! journal-path quads)
+               ;; sharded: only the bounded active shard is rewritten, so the cost
+               ;; of a tick does not grow with the size of the corpus.
+               (quad/append-sharded! journal-dir "google-patents" quads)
                {:seeds (grow-seeds seeds (:citations rec) policy retrieved-at)
                 :state (advance state index (:id seed) retrieved-at)
                 :quads (count quads)
@@ -175,10 +177,10 @@
        :or {ticks 1 seeds-path "seeds.edn" state-path "state.edn"}}]
      (when-not (seq dataset-repo)
        (throw (ex-info "dataset repo path required (--dataset or HIRAMEKI_DATASET_REPO)" {})))
-     (let [journal-path (str (io/file dataset-repo "80-data" "public" "google-patents.journal.edn"))
+     (let [journal-dir (str (io/file dataset-repo "80-data" "public"))
            seeds-file (read-edn-file seeds-path {:policy {} :seeds []})
            policy (merge default-policy (:policy seeds-file))]
-       (io/make-parents (io/file journal-path))
+       (.mkdirs (io/file journal-dir))
        (loop [i 1
               seeds (vec (:seeds seeds-file))
               state (read-edn-file state-path {:cursor 0 :exhausted #{} :ticks 0})
@@ -192,7 +194,7 @@
                 :new (count (filter :new? results))
                 :seeds (count seeds)
                 :results results})
-           (let [r (tick! {:journal-path journal-path :seeds seeds :state state
+           (let [r (tick! {:journal-dir journal-dir :seeds seeds :state state
                            :policy policy
                            :retrieved-at (or retrieved-at
                                              (str (java.time.Instant/now)))})]

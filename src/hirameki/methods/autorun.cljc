@@ -81,9 +81,9 @@
      visible instead of being mistaken for an empty world."
      [dataset-repo]
      (if (seq dataset-repo)
-       (let [f (io/file dataset-repo "80-data" "public" "google-patents.journal.edn")]
-         (if (.exists f)
-           (c/journal->patents (quad/read-journal (str f)))
+       (let [d (io/file dataset-repo "80-data" "public")]
+         (if (.isDirectory d)
+           (c/journal->patents (quad/read-sharded (str d) "google-patents"))
            []))
        [])))
 
