@@ -165,9 +165,9 @@
        :or {seed-path "kotoba/seed.edn" as-of "manual"}}]
      (when-not (seq dataset-repo)
        (throw (ex-info "dataset repository path required (--dataset or HIRAMEKI_DATASET_REPO)" {})))
-     (let [journal (io/file dataset-repo "80-data" "public" "google-patents.journal.edn")
-           harvested (if (.exists journal)
-                       (corpus/journal->patents (quad/read-journal (str journal)))
+     (let [journal-dir (io/file dataset-repo "80-data" "public")
+           harvested (if (.isDirectory journal-dir)
+                       (corpus/journal->patents (quad/read-sharded (str journal-dir) "google-patents"))
                        [])
            curated (he/patents seed-path)
            merged (nz/merge-corpus curated harvested)]

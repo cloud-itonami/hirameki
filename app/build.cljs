@@ -28,8 +28,8 @@
   "The summary the views render, straight from the corpus journal and the
   dataset's own provenance file. Nothing here is typed in by hand."
   [dataset-repo ref-year]
-  (let [journal (path/join dataset-repo "80-data" "public" "google-patents.journal.edn")
-        rows (corpus/journal->patents (quad/read-journal journal))
+  (let [journal-dir (path/join dataset-repo "80-data" "public")
+        rows (corpus/journal->patents (quad/read-sharded journal-dir "google-patents"))
         s (corpus/summarize rows ref-year)
         prov (edn/read-string (slurp* (path/join dataset-repo "ingest-provenance.edn")))]
     {:corpus-size (count rows)

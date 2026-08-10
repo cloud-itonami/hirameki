@@ -15,7 +15,7 @@
         ;; kotoba-lang holds the library; the loop that calls it lives here.
         io.github.kotoba-lang/toshokan-patents
         {:git/url "https://github.com/kotoba-lang/toshokan-patents"
-         :git/sha "84a1e9cbc7b6278e74b07eb814c564cc421c7f19"}
+         :git/sha "9f7be73357be341cecb0eacd23eaeee245913770"}
 
         ;; USPTO ODP responses only (ingest.cljc). The Google Patents leg needs
         ;; no JSON and no HTTP dependency at all.
