@@ -13,7 +13,7 @@
             [clojure.string :as str]
             [jp-go-dds.page :as page]
             [jp-go-dds.tokens :as tokens]
-            [toshokan-patents.quad :as quad]
+            [toshokan-patents.quad.fs :as qfs]
             [hirameki.methods.corpus :as corpus]
             [hirameki.app.route :as route]
             [hirameki.app.views :as views]))
@@ -29,7 +29,7 @@
   dataset's own provenance file. Nothing here is typed in by hand."
   [dataset-repo ref-year]
   (let [journal-dir (path/join dataset-repo "80-data" "public")
-        rows (corpus/journal->patents (quad/read-sharded journal-dir "google-patents"))
+        rows (corpus/journal->patents (qfs/read-sharded journal-dir "google-patents"))
         s (corpus/summarize rows ref-year)
         prov (edn/read-string (slurp* (path/join dataset-repo "ingest-provenance.edn")))]
     {:corpus-size (count rows)

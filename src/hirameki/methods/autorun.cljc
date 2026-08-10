@@ -23,7 +23,7 @@
   (:require [hirameki.methods.analyze :as a]
             [hirameki.methods.corpus :as c]
             [hirameki.methods.kotoba :as k]
-            #?(:clj [toshokan-patents.quad :as quad])
+            #?(:clj [toshokan-patents.quad.fs :as qfs])
             #?(:clj [hirameki.methods.hirameki-edn :as he])
             #?(:clj [clojure.java.io :as io])))
 
@@ -83,7 +83,7 @@
      (if (seq dataset-repo)
        (let [d (io/file dataset-repo "80-data" "public")]
          (if (.isDirectory d)
-           (c/journal->patents (quad/read-sharded (str d) "google-patents"))
+           (c/journal->patents (qfs/read-sharded (str d) "google-patents"))
            []))
        [])))
 

@@ -5,3 +5,5 @@ app/dist/
 data/
 node_modules/
 *.log
+dist/
+.shadow-cljs/
