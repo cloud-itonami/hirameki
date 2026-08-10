@@ -36,6 +36,7 @@
   so a replay writes the same quads."
   (:require [clojure.string :as str]
             [toshokan-patents.quad :as quad]
+            #?(:clj [toshokan-patents.quad.fs :as qfs])
             [toshokan-patents.sources.google-patents :as gp]
             #?(:clj [clojure.edn :as edn])
             #?(:clj [clojure.java.io :as io])))
@@ -180,7 +181,7 @@
      (let [policy (merge default-policy policy)]
        (if-let [seed (next-seed seeds)]
          (let [pid (:query seed)
-               existing (quad/read-sharded journal-dir "google-patents")
+               existing (qfs/read-sharded journal-dir "google-patents")
                entities (quad/entities existing)
                ;; ids there is no point queueing again: already in the corpus,
                ;; or known dead. This is what replaces the old `:exhausted` list.
@@ -214,7 +215,7 @@
              (let [quads (gp/->quads (quad/next-tx existing) retrieved-at rec)]
                ;; sharded: only the bounded active shard is rewritten, so the cost
                ;; of a tick does not grow with the size of the corpus.
-               (quad/append-sharded! journal-dir "google-patents" quads)
+               (qfs/append-sharded! journal-dir "google-patents" quads)
                {:seeds (grow-seeds (drop-seed seeds seed) (:citations rec)
                                    (conj known (str/upper-case (str pid))) policy retrieved-at)
                 :state (record-tick state retrieved-at)
@@ -233,27 +234,30 @@
      (let [f (io/file path)]
        (if (.exists f) (edn/read-string (slurp f)) default))))
 
-#?(:clj
-   (defn render-edn
-     "EDN with the seed vector ONE PER LINE, still a single readable form.
+(defn render-edn
+  "EDN with the seed vector ONE PER LINE, still a single readable form.
 
-     `seeds.edn` was a single 206 KB line rewritten on every tick — the same
-     shape that made the journal undiffable and its git blobs unreviewable. The
-     queue is bounded now so size is no longer the problem, but a one-line file
-     still makes `git diff` useless on the file that records what the loop is
-     about to do next.
+  `seeds.edn` was a single 206 KB line rewritten on every tick — the same shape
+  that made the journal undiffable and its git blobs unreviewable. The queue is
+  bounded now so size is no longer the problem, but a one-line file still makes
+  `git diff` useless on the file that records what the loop is about to do next.
 
-     It stays ONE map so `edn/read-string` reads it unchanged; only the
-     whitespace inside the `:seeds` vector differs."
-     [data]
-     (if-let [seeds (:seeds data)]
-       (let [head (pr-str (dissoc data :seeds))]
-         (str (subs head 0 (dec (count head)))            ; drop the closing }
-              (when (> (count head) 2) " ")
-              ":seeds ["
-              (reduce str (map #(str "\n" (pr-str %)) seeds))
-              "\n]}\n"))
-       (str (pr-str data) "\n"))))
+  It stays ONE map so `edn/read-string` reads it unchanged; only the whitespace
+  inside the `:seeds` vector differs.
+
+  **Unconditional, not `:clj`-only.** The Cloudflare Worker writes the same two
+  files through the GitHub API, so a JVM-only writer would mean two formats for
+  one file — and the one that is easier to write is the one-line form this
+  function exists to avoid."
+  [data]
+  (if-let [seeds (:seeds data)]
+    (let [head (pr-str (dissoc data :seeds))]
+      (str (subs head 0 (dec (count head)))            ; drop the closing }
+           (when (> (count head) 2) " ")
+           ":seeds ["
+           (reduce str (map #(str "\n" (pr-str %)) seeds))
+           "\n]}\n"))
+    (str (pr-str data) "\n")))
 
 #?(:clj
    (defn write-edn-file! [path data comment]
@@ -276,7 +280,7 @@
            _ (.mkdirs (io/file journal-dir))
            harvested (into #{}
                            (map #(str/upper-case (str/replace (str %) #"^gp:" "")))
-                           (quad/entities (quad/read-sharded journal-dir "google-patents")))
+                           (quad/entities (qfs/read-sharded journal-dir "google-patents")))
            {:keys [seeds state dropped]} (migrate-state
                                   (read-edn-file seeds-path {:policy {} :seeds []})
                                   (read-edn-file state-path {:ticks 0})

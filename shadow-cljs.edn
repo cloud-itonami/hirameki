@@ -1,0 +1,15 @@
+;; The harvest Worker. :esm, the same shape as the other cloud-itonami actors.
+;;
+;; The classpath deliberately includes `src` — the SAME sources the JVM actor
+;; uses. The pure half of the harvest and the parser are .cljc and compile here
+;; unchanged; that is the whole point of the Worker existing in this repo rather
+;; than as a separate JS project, where the seed policy and the journal format
+;; would immediately become a second implementation.
+{:cache-root "/tmp/shadow-cache"
+ :deps {:aliases [:cljs]}
+ :builds
+ {:worker
+  {:target :esm
+   :output-dir "dist"
+   :modules {:worker {:exports {default hirameki.edge.worker/app}}}
+   :compiler-options {:output-feature-set :es2020 :infer-externs :auto}}}}

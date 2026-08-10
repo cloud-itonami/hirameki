@@ -25,7 +25,7 @@
             [hirameki.methods.cid :as cid]
             #?(:clj [hirameki.methods.corpus :as corpus])
             #?(:clj [hirameki.methods.normalize :as nz])
-            #?(:clj [toshokan-patents.quad :as quad])
+            #?(:clj [toshokan-patents.quad.fs :as qfs])
             #?(:clj [hirameki.methods.hirameki-edn :as he])
             #?(:clj [clojure.java.io :as io])
             #?(:clj [clojure.pprint :as pprint])))
@@ -167,7 +167,7 @@
        (throw (ex-info "dataset repository path required (--dataset or HIRAMEKI_DATASET_REPO)" {})))
      (let [journal-dir (io/file dataset-repo "80-data" "public")
            harvested (if (.isDirectory journal-dir)
-                       (corpus/journal->patents (quad/read-sharded (str journal-dir) "google-patents"))
+                       (corpus/journal->patents (qfs/read-sharded (str journal-dir) "google-patents"))
                        [])
            curated (he/patents seed-path)
            merged (nz/merge-corpus curated harvested)]

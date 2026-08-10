@@ -1,0 +1,20 @@
+{
+  "name": "cloud-itonami-hirameki-harvest",
+  "main": "dist/worker.js",
+  "compatibility_date": "2026-07-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  // 6 時間ごと。operator の launchd は 4 時間ごとなので、**両方が同時に走る形に
+  // しない** — 同じ 4 files を書くので、409 で片方が捨てられるだけ無駄になる。
+  // ずらしておけば、片方が止まってももう片方が同じ状態から続きを歩く。
+  "triggers": { "crons": ["23 1,7,13,19 * * *"] },
+
+  // 秘密はここに書かない（このファイルは repo に入る）。
+  //   GITHUB_TOKEN  contents:write on cloud-itonami/hirameki と hirameki-patents
+  //   RUN_TOKEN     POST /run の手動起動用
+  //   TICKS         1 回の起動で歩く tick 数（既定 10）
+  //   SLEEP_MS      request の間隔（既定 2000）— これは source への約束であって
+  //                 マシンの限界ではないので、速くしない
+  "vars": { "TICKS": "10", "SLEEP_MS": "2000" }
+}
