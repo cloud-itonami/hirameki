@@ -120,7 +120,7 @@
                                    [k (every? #(< (:bytes %) cid/single-block-limit)
                                               (:parts v))]))
                          mat)
-     :verify "clojure -M -m verify"
+     :verify "clojure -M:query verify.clj"
      :canonical-format :edn}))
 
 #?(:clj
