@@ -1,0 +1,17 @@
+{:repository/id "hirameki"
+ :repository/org "cloud-itonami"
+ :repository/type :actor
+ :actor/id "hirameki"
+ :actor/glyph "閃"
+ :canonical-format :edn
+
+ ;; No did:web here yet, deliberately.
+ ;;
+ ;; The sibling actors carry a `.well-known/did.json` naming a DID at a host
+ ;; that does not resolve (measured 2026-08-10: watari.etzhayyim.com has no DNS
+ ;; record). A DID that resolves nowhere is not an identity, it is a claim, and
+ ;; copying the shape would propagate the claim. When itonami.cloud actually
+ ;; serves a document for this actor, the DID goes here and the did.json beside
+ ;; it — not before.
+ :actor/did :not-yet-published
+ :actor/did-planned "did:web:itonami.cloud:actor:hirameki"}

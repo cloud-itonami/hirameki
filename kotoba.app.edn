@@ -1,0 +1,10 @@
+[{:db/id -1
+  :kotoba.app/name "hirameki"
+  :kotoba.app/version "0.2.0"
+  :kotoba.app/components
+  [{:name "hirameki"
+    :src "src/hirameki/methods/mesh.clj"
+    :scale 1
+    :triggers [{:type :kse :topic "etzhayyim/actor/hirameki"}]
+    :requires #{:cap/kqe}}]
+  :kotoba.app/placement {:spread :zone :require {:tier "edge"}}}]

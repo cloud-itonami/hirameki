@@ -1,0 +1,32 @@
+{:paths ["src"]
+ :deps {com.junkawasaki/multiformats-clj
+        {:git/url "https://github.com/com-junkawasaki/multiformats-clj.git"
+         :git/sha "0f4ed68ff9e3cbf069569d897c9304713a14036c"}
+
+        com.etzhayyim/kotoba-datom
+        {:git/url "https://github.com/etzhayyim/com-etzhayyim-kotoba-datom"
+         :git/sha "3c4b3b92234e59ba285119fd8b2ca4c2ee172ff8"}
+
+        com.etzhayyim/social-publication
+        {:git/url "https://github.com/etzhayyim/com-etzhayyim-social-publication"
+         :git/sha "e8127d0661284b1c12ce1b216c84b5ed2db619ab"}
+
+        ;; the patent parser — pure HTML→field-map + one polite request.
+        ;; kotoba-lang holds the library; the loop that calls it lives here.
+        io.github.kotoba-lang/toshokan-patents
+        {:git/url "https://github.com/kotoba-lang/toshokan-patents"
+         :git/sha "84a1e9cbc7b6278e74b07eb814c564cc421c7f19"}
+
+        ;; USPTO ODP responses only (ingest.cljc). The Google Patents leg needs
+        ;; no JSON and no HTTP dependency at all.
+        cheshire/cheshire {:mvn/version "5.13.0"}}
+
+ :aliases
+ ;; the test namespaces are `hirameki.methods.test-*`, not `*-test`, so the
+ ;; runner's default `.*-test$` matches nothing and reports a cheerful 0 tests.
+ {:test {:extra-paths ["test"]
+         :extra-deps {io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :main-opts ["-m" "cognitect.test-runner" "-r" "hirameki\\.methods\\.test-.*"]}
+  :lint {:replace-deps {clj-kondo/clj-kondo {:mvn/version "2024.11.14"}}
+         :main-opts ["-m" "clj-kondo.main" "--lint" "src" "test" "--fail-level" "error"]}}}

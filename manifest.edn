@@ -1,0 +1,97 @@
+{:actor/id        "hirameki"
+ :actor/glyph     "閃"
+ :actor/tier      :tier-b
+ :actor/integrates ["abaki" "busshi" "chigiri" "kabuto" "mitooshi" "rasen" "tokigusuri" "tsumugi"]
+ :actor/org       "cloud-itonami"
+ :actor/domain    "itonami.cloud"
+ :actor/kind      :observation-watcher
+ :actor/purpose   "World PUBLIC-PATENT observatory. HARVESTS worldwide patent bibliographic metadata by walking the citation graph (Google Patents, key-free), folds it into the independently versioned cloud-itonami/hirameki-patents corpus, and emits release-observation Kotoba Datoms. Observation only: never files, litigates, trades, or produces an FTO/infringement verdict."
+ :actor/status    :r1-harvesting
+ :actor/adr       "2606212200"
+ :actor/related   ["2604251024" "2606171300" "2604271830" "2605262130" "2605312345" "2605241500" "2606022000" "2606161730"]
+
+ :actor/charter-rider
+ {:rider/version "3.5"
+  :rider/applied true}
+
+ :actor/gates
+ [{:gate/id "G1" :gate/name "release-map-not-verdict" :gate/rule "A RELEASE map (exclusivity→commons), NEVER a patent-busting / FTO-opinion / infringement-determination / per-company-verdict / patent-equity signal; :hirameki/infringement-verdict, :hirameki/fto-opinion, :hirameki/equity-signal unrepresentable (test-enforced)"}
+  {:gate/id "G2" :gate/name "patent-is-object-never-holder" :gate/rule "A patent is the GATED OBJECT, never a 取-holder source — only an assignee/holder imposes exclusivity; :hirameki.patent/imposes-on unrepresentable (enforced in code + test)"}
+  {:gate/id "G3" :gate/name "non-adjudicating-no-forecast" :gate/rule "Patent status (granted/expired) + assignee share are DISCLOSED facts from the issuing office, never re-judged (no validity/novelty verdict) and never a forecast"}
+  {:gate/id "G4" :gate/name "lawful-release-only" :gate/rule "Release via statutory expiry / public-domain / voluntary open licensing (pledge / pool / FRAND-zero / MPP) only; circumvention / infringement / design-around-to-evade unrepresentable (:hirameki.patent/design-around)"}
+  {:gate/id "G5" :gate/name "kotoba-eavt-native" :gate/rule "State is kotoba EAVT Datoms (no SQL/RisingWave/Cypher — supersedes ADR-2604251024); derived datoms flagged :hirameki/derived + :hirameki/sourcing"}
+  {:gate/id "G6" :gate/name "aggregate-no-person-inventor" :gate/rule "Aggregate-first; assignee = org; NO person-level inventor targeting (:hirameki.inventor/person unrepresentable); no-doxxing (tsumugi/keizu lineage)"}
+  {:gate/id "G7" :gate/name "murakumo-only" :gate/rule "Any narration via Murakumo no-VKE mesh only (DEFAULT-PREFERRED per Rider v3.3 §2(i) / ADR-2606172359)"}
+  {:gate/id "G8" :gate/name "no-server-key" :gate/rule "Platform holds no key; live primary-source ingest + IPFS pin/IPNS publish are operator steps (R0 seed = :representative)"}
+  {:gate/id "G9" :gate/name "dataset-repository-contract" :gate/rule "Corpus comes from the pinned cloud-itonami/hirameki-patents repository; canonical metadata and artifacts are EDN and EVERY published shard stays under the 256 KiB raw-block limit so its CIDv1 raw/sha2-256 is exactly what `ipfs add --cid-version=1 --raw-leaves` produces (verify.clj fails closed otherwise)"}]
+
+ :actor/non-goals
+ [{:n/id "N1" :n/rule "NOT a patent-filing/prosecution/generation actor — 60-apps/etzhayyim-project-open-patent does invention generation; hirameki only observes/mirrors"}
+  {:n/id "N2" :n/rule "NOT legal advice / FTO / patentability opinion (chigiri 契 UPL boundary)"}
+  {:n/id "N3" :n/rule "NOT a patent-equity / litigation-prediction signal (G3); mitooshi owns distributions"}
+  {:n/id "N4" :n/rule "NOT the pharma patent-cliff specialist — that is tokigusuri 時薬; hirameki is the all-technology generalization, pharmaceutical compounds deferred to tokigusuri"}
+  {:n/id "N5" :n/rule "No person/individual inventor data (G6)"}]
+
+ :actor/methods
+ [{:method/id "hirameki-edn" :method/file "src/hirameki/methods/hirameki_edn.cljc" :method/role "seed loader and classifier"}
+  {:method/id "analyze" :method/file "src/hirameki/methods/analyze.cljc" :method/role "release-map analysis and Datom rendering"}
+  {:method/id "cid" :method/file "src/hirameki/methods/cid.cljc" :method/role "adapter over pinned multiformats-clj"}
+  {:method/id "dataset" :method/file "src/hirameki/methods/dataset.cljc" :method/role "canonical EDN materializer for an explicitly supplied dataset repository"}
+  {:method/id "ingest" :method/file "src/hirameki/methods/ingest.cljc" :method/role "operator-key USPTO ODP ingest into the explicit dataset repository"}
+  {:method/id "kotoba" :method/file "src/hirameki/methods/kotoba.cljc" :method/role "adapter over pinned shared Kotoba Datom ledger"}
+  {:method/id "social" :method/file "src/hirameki/methods/social.cljc" :method/role "adapter over pinned social-publication membrane"}
+  {:method/id "autorun" :method/file "src/hirameki/methods/autorun.cljc" :method/role "idempotent observation heartbeat"}]
+
+ :actor/lex
+ [{:lex/id "patentObservation"}
+  {:lex/id "releaseMap"}]
+
+ :actor/seed
+ {:seed/file "kotoba/seed.edn"
+  :seed/ontology "kotoba/ontology.hirameki.edn"
+  :seed/sourcing :representative
+  :seed/sections [:A :B :C :G :H :Y]}
+
+ :actor/dataset
+ {:dataset/repository "https://github.com/etzhayyim/com-etzhayyim-hirameki-patents"
+  :dataset/revision "936d7832ad1fbd1873570a58af14b17acc196a0d"
+  :dataset/substrate :git-annex-ipfs-ready
+  :dataset/adr "2605241500"
+  :dataset/artifacts [{:file "hirameki-patents.corpus.kotoba.edn" :bytes 2055 :cid "bafkreiacmpjkhjncxlfjtfhfia7ikjyfjq42u7yi3x56ajppu374t3j4gi"}
+                      {:file "hirameki-patents.datoms.kotoba.edn" :bytes 6255 :cid "bafkreif7ricl4x24y5pnquryjf4gakmwm36uqijtsao3rw2cuxuwflw4be"}
+                      {:file "publish-manifest.edn"}
+                      {:file "ingest-provenance.edn"}]
+  :dataset/content-addressed :cidv1-raw-sha256
+  :dataset/note "R0 bounded snapshot git-tracked directly; full-world ~200M-patent corpus via DataLad→IPFS (git-annex) is the operator G9 step."}
+
+ :actor/ledger
+ {:ledger/file "data/persisted/hirameki.observations.kotoba.edn"
+  :ledger/kind :append-only-content-addressed-commit-dag
+  :ledger/gitignored true
+  :ledger/idempotent-by-content true
+  :ledger/note "Generated observation ledger of release observations; tamper-evident (verify-chain); no-server-key; appends only on change; a record of exclusivity→commons OBSERVATIONS, never a target-list."}
+
+ :actor/dependencies
+ [{:id :multiformats-clj :repository "https://github.com/com-junkawasaki/multiformats-clj" :revision "0f4ed68ff9e3cbf069569d897c9304713a14036c"}
+  {:id :kotoba-datom :repository "https://github.com/etzhayyim/com-etzhayyim-kotoba-datom" :revision "3c4b3b92234e59ba285119fd8b2ca4c2ee172ff8"}
+  {:id :social-publication :repository "https://github.com/etzhayyim/com-etzhayyim-social-publication" :revision "e8127d0661284b1c12ce1b216c84b5ed2db619ab"}]
+
+ :actor/tests
+ {:runner :babashka
+  :cmd "bb test"
+  :tests 40
+  :assertions 148
+  :suites ["test/hirameki/methods/test_hirameki_edn.cljc" "test/hirameki/methods/test_analyze.cljc"
+           "test/hirameki/methods/test_cid.cljc" "test/hirameki/methods/test_dataset.cljc"
+           "test/hirameki/methods/test_ingest.cljc" "test/hirameki/methods/test_kotoba.cljc"
+           "test/hirameki/methods/test_autorun.cljc" "test/hirameki/methods/test_social.cljc"]}
+ :substrate {:datasets [{:dataset-id "hirameki-patents"
+                         :layer :repo
+                         :source "worldwide public-patent KG mirror (USPTO ODP, ADR-2606212200)"
+                         :cidv1 "bafkreieakuefgpxli7n4einc5zdnd5yxnrptwxlmazrpa7tplotufcjk7u"
+                         :freshness-days 0
+                         :retrieved "2026-06-30"
+                         :counts-toward-world-coverage false
+                         :provenance {:repository "https://github.com/etzhayyim/com-etzhayyim-hirameki-patents"
+                                      :revision "936d7832ad1fbd1873570a58af14b17acc196a0d"
+                                      :file "ingest-provenance.edn"}}]}}

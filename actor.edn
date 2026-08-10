@@ -1,0 +1,11 @@
+{:actor/id   "hirameki"
+ :graph-type "cloud.itonami.hirameki.graph"
+ :published  "2026-08-10"
+ ;; What a publication bundle would carry. The corpus is NOT in here: it is an
+ ;; independently versioned repository (cloud-itonami/hirameki-patents) so it
+ ;; can be cited and verified without this code.
+ :bundle [["data" "data"]
+          ["schema.edn" "schema.edn"]
+          ["manifest.edn" "manifest.edn"]
+          ["README.md" "README.md"]]
+ :dataset-repo "cloud-itonami/hirameki-patents"}
