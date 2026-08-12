@@ -28,6 +28,21 @@
   assignee value that stands for people."
   #{"individual" "individuals" "n/a" "na" "none" "unknown" "unassigned"})
 
+(def ^:private unreadable-in-a-keyword
+  "Characters that end a keyword when the corpus is read back as EDN.
+
+  A keyword is written to the corpus verbatim, so any of these inside one makes
+  the whole shard unparseable — not the record, the SHARD. Measured 2026-08-12:
+  `US Atomic Energy Commission (AEC)` became `:us-atomic-energy-commission-(aec)`,
+  the `(` opened a list inside a map literal, and `corpus/000.kotoba.edn` failed
+  with `Map literal must contain an even number of forms`. 504 records in, 937
+  published, `verify.clj` red — from one pair of parentheses.
+
+  Deliberately a deny list, not an `[a-z0-9-]` allow list: an allow list would
+  silently erase every non-ASCII assignee (日本ペイント → nil → `:unassigned`),
+  turning a reader bug into a measurement bug."
+  #"[\s()\[\]{}\"'`;,~@^\\/#]+")
+
 (defn assignee->keyword
   "Normalize an ORGANIZATION name → a stable keyword, or nil if it is not one.
 
@@ -35,15 +50,25 @@
   `Kansai Paint Co., Ltd.` and `Kansai Paint Co Ltd` are one holder rather than
   two, which is the difference between a correct concentration reading and a
   diluted one. Placeholders return nil so the caller can fold them into
-  `:unassigned` rather than count them as a holder."
+  `:unassigned` rather than count them as a holder.
+
+  The result is always readable back as EDN — see `unreadable-in-a-keyword`."
   [s]
   (when (and s (not (str/blank? s)))
-    (let [cleaned (-> s str/lower-case str/trim
-                      (str/replace #"[,\.]" "")
-                      (str/replace legal-suffixes "")
-                      str/trim
-                      (str/replace #"\s+" "-"))]
+    ;; `bare` keeps the placeholders recognizable: slugging first would turn
+    ;; `N/A` into `n-a`, which is in no deny list, and a hole in the data would
+    ;; start counting as a holder.
+    (let [bare (-> s str/lower-case str/trim
+                   (str/replace #"[,\.]" "")
+                   (str/replace legal-suffixes "")
+                   str/trim
+                   (str/replace #"\s+" " "))
+          cleaned (-> bare
+                      (str/replace unreadable-in-a-keyword "-")
+                      (str/replace #"-{2,}" "-")
+                      (str/replace #"^-+|-+$" ""))]
       (when-not (or (str/blank? cleaned)
+                    (contains? placeholder-assignees bare)
                     (contains? placeholder-assignees cleaned))
         (keyword cleaned)))))
 
