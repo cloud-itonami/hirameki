@@ -1,8 +1,29 @@
 (ns hirameki.methods.test-normalize
   "Shared normalizers. Every row source folds through these, so a disagreement
   here shows up as one organization counted twice under two keys."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.edn :as edn]
+            [clojure.test :refer [deftest is testing]]
             [hirameki.methods.normalize :as nz]))
+
+(deftest a-key-is-always-readable-back
+  (testing "measured 2026-08-12: `(AEC)` in an assignee name opened a list inside
+            a map literal and made the whole 504-record shard unparseable"
+    (is (= :us-atomic-energy-commission-aec
+           (nz/assignee->keyword "US Atomic Energy Commission (AEC)"))))
+  (testing "every delimiter that could end a keyword becomes a hyphen"
+    (doseq [name ["Acme (Holdings)" "Acme [Group]" "Acme {Labs}" "Acme \"Quoted\""
+                  "Acme; Co" "Acme's Lab" "Acme@Work" "Acme/Bio" "Acme#1"
+                  "Acme`Tick" "Acme~Tilde" "Acme^Hat" "Acme\\Back"]]
+      (let [k (nz/assignee->keyword name)
+            round-trip (edn/read-string (pr-str {k 1}))]
+        (is (= {k 1} round-trip)
+            (str name " → " k " must read back as EDN")))))
+  (testing "a run of them collapses instead of leaving `--` or a trailing dash"
+    (is (= :acme-labs (nz/assignee->keyword "Acme (Labs)")))
+    (is (= :acme (nz/assignee->keyword "(Acme)"))))
+  (testing "non-ASCII names survive — an [a-z0-9] allow list would erase them
+            into :unassigned, which is a measurement error, not a reader fix"
+    (is (= :日本ペイント (nz/assignee->keyword "日本ペイント")))))
 
 (deftest legal-form-variants-are-one-holder
   (testing "the same company written four ways is one key"
