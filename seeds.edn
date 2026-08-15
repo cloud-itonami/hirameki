@@ -1,25 +1,5 @@
 ;; seeds.edn — pending frontier queue（daemon 管理 + 人手編集）
 {:policy {:max-records-per-tick 8, :max-new-seeds-per-tick 10, :max-seeds 5000, :sources ["google-patents"], :inter-source-sleep-ms 2000} :seeds [
-{:id "cited-us1933963", :query "US1933963", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us2118152", :query "US2118152", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us2256853", :query "US2256853", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us2293690", :query "US2293690", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us2321938", :query "US2321938", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us2293125", :query "US2293125", :grown-from "google-patents", :grown-at "2026-07-25T13:47:01.983Z"}
-{:id "cited-us695041", :query "US695041", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us1311491", :query "US1311491", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us1302352", :query "US1302352", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us1816307", :query "US1816307", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us1719166", :query "US1719166", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us2054113", :query "US2054113", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us2089524", :query "US2089524", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us2304819", :query "US2304819", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-gb600687a", :query "GB600687A", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-us2499421", :query "US2499421", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.028Z"}
-{:id "cited-gb189716315a", :query "GB189716315A", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
-{:id "cited-us1598302", :query "US1598302", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
-{:id "cited-us1921369", :query "US1921369", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
-{:id "cited-gb392742a", :query "GB392742A", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
 {:id "cited-us2208236", :query "US2208236", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
 {:id "cited-us2176418", :query "US2176418", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
 {:id "cited-us2243604", :query "US2243604", :grown-from "google-patents", :grown-at "2026-07-25T13:47:03.949Z"}
@@ -2079,4 +2059,12 @@
 {:id "cited-us2698793", :query "US2698793", :grown-from "google-patents", :grown-at "2026-08-15T04:37:49.376615Z"}
 {:id "cited-gb665479a", :query "GB665479A", :grown-from "google-patents", :grown-at "2026-08-15T04:37:51.927414Z"}
 {:id "cited-us2636870", :query "US2636870", :grown-from "google-patents", :grown-at "2026-08-15T04:37:51.927414Z"}
+{:id "cited-us2219700", :query "US2219700", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2212770", :query "US2212770", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2177658", :query "US2177658", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2174779", :query "US2174779", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2242364", :query "US2242364", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2320115", :query "US2320115", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2261977", :query "US2261977", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
+{:id "cited-us2365374", :query "US2365374", :grown-from "google-patents", :grown-at "2026-08-15T08:45:49.394562Z"}
 ]}
