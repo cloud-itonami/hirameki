@@ -32,7 +32,7 @@
             [hirameki.methods.normalize :as nz]
             [hirameki.methods.dataset :as ds]
             #?(:clj [hirameki.methods.hirameki-edn :as he])
-            #?(:clj [cheshire.core :as json])
+            [json.compat :as json]
             #?(:clj [clojure.java.io :as io]))
   #?(:clj (:import (java.net URI URLEncoder)
                    (java.net.http HttpClient HttpRequest HttpResponse$BodyHandlers)
