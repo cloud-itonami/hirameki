@@ -1,25 +1,5 @@
 ;; seeds.edn — pending frontier queue（daemon 管理 + 人手編集）
 {:policy {:max-records-per-tick 8, :max-new-seeds-per-tick 10, :max-seeds 5000, :sources ["google-patents"], :inter-source-sleep-ms 2000} :seeds [
-{:id "cited-us3225029", :query "US3225029", :grown-from "google-patents", :grown-at "2026-08-11T08:54:25.523603Z"}
-{:id "cited-us3111459", :query "US3111459", :grown-from "google-patents", :grown-at "2026-08-11T08:54:36.620099Z"}
-{:id "cited-us3135666", :query "US3135666", :grown-from "google-patents", :grown-at "2026-08-11T08:54:36.620099Z"}
-{:id "cited-us3258408", :query "US3258408", :grown-from "google-patents", :grown-at "2026-08-11T08:54:36.620099Z"}
-{:id "cited-us3269917", :query "US3269917", :grown-from "google-patents", :grown-at "2026-08-11T08:54:36.620099Z"}
-{:id "cited-us3346560", :query "US3346560", :grown-from "google-patents", :grown-at "2026-08-11T12:37:11.438400Z"}
-{:id "cited-us2224538", :query "US2224538", :grown-from "google-patents", :grown-at "2026-08-11T12:37:16.899519Z"}
-{:id "cited-us2297308", :query "US2297308", :grown-from "google-patents", :grown-at "2026-08-11T12:37:16.899519Z"}
-{:id "cited-us2299057", :query "US2299057", :grown-from "google-patents", :grown-at "2026-08-11T12:37:16.899519Z"}
-{:id "cited-ca470229a", :query "CA470229A", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2167190", :query "US2167190", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2216037", :query "US2216037", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2310397", :query "US2310397", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2167191", :query "US2167191", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2198573", :query "US2198573", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2205422", :query "US2205422", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2312862", :query "US2312862", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2652117", :query "US2652117", :grown-from "google-patents", :grown-at "2026-08-11T12:37:21.505742Z"}
-{:id "cited-us2214551", :query "US2214551", :grown-from "google-patents", :grown-at "2026-08-11T12:37:26.181329Z"}
-{:id "cited-us2113856", :query "US2113856", :grown-from "google-patents", :grown-at "2026-08-11T12:37:26.181329Z"}
 {:id "cited-us2176240", :query "US2176240", :grown-from "google-patents", :grown-at "2026-08-11T12:37:26.181329Z"}
 {:id "cited-us2176375", :query "US2176375", :grown-from "google-patents", :grown-at "2026-08-11T12:37:26.181329Z"}
 {:id "cited-us2192945", :query "US2192945", :grown-from "google-patents", :grown-at "2026-08-11T12:37:26.181329Z"}
@@ -3718,4 +3698,14 @@
 {:id "cited-us2691654", :query "US2691654", :grown-from "google-patents", :grown-at "2026-08-23T00:37:54.137272Z"}
 {:id "cited-us2949451", :query "US2949451", :grown-from "google-patents", :grown-at "2026-08-23T00:37:56.729697Z"}
 {:id "cited-us3135737", :query "US3135737", :grown-from "google-patents", :grown-at "2026-08-23T00:37:56.729697Z"}
+{:id "cited-us2852505", :query "US2852505", :grown-from "google-patents", :grown-at "2026-08-23T04:37:55.792039Z"}
+{:id "cited-us3014900", :query "US3014900", :grown-from "google-patents", :grown-at "2026-08-23T04:37:55.792039Z"}
+{:id "cited-us2942977", :query "US2942977", :grown-from "google-patents", :grown-at "2026-08-23T04:38:05.377813Z"}
+{:id "cited-us3085946", :query "US3085946", :grown-from "google-patents", :grown-at "2026-08-23T04:38:21.468455Z"}
+{:id "cited-us3118820", :query "US3118820", :grown-from "google-patents", :grown-at "2026-08-23T04:38:21.468455Z"}
+{:id "cited-us3102079", :query "US3102079", :grown-from "google-patents", :grown-at "2026-08-23T04:38:21.468455Z"}
+{:id "cited-ca672274a", :query "CA672274A", :grown-from "google-patents", :grown-at "2026-08-23T04:38:25.933793Z"}
+{:id "cited-us2207334", :query "US2207334", :grown-from "google-patents", :grown-at "2026-08-23T04:40:16.595629Z"}
+{:id "cited-us2229493", :query "US2229493", :grown-from "google-patents", :grown-at "2026-08-23T04:40:16.595629Z"}
+{:id "cited-us2349062", :query "US2349062", :grown-from "google-patents", :grown-at "2026-08-23T04:40:16.595629Z"}
 ]}
