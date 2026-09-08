@@ -23,7 +23,7 @@
   daemon committed between this Worker's read and write, the write fails loudly
   and the tick is retried next cron. No locking, no lease, no coordination —
   and no chance of two writers silently clobbering each other."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def api "https://api.github.com")
 

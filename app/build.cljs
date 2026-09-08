@@ -10,7 +10,7 @@
   (:require ["node:fs" :as fs]
             ["node:path" :as path]
             [clojure.edn :as edn]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [jp-go-dds.page :as page]
             [jp-go-dds.tokens :as tokens]
             [toshokan-patents.quad.fs :as qfs]

@@ -19,7 +19,7 @@
 ;;     without that, being one document bought nothing.
 (ns crossing-test
   (:require ["playwright$default" :as pw]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [promesa.core :as p]))
 
 (def views ["overview" "release" "holders" "frontier" "provenance"])
