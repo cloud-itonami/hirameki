@@ -1,2 +1,2 @@
 ;; state.edn — daemon managed; do not hand-edit.
-{:ticks 4071, :last-tick "2026-09-08T04:38:10.659236Z", :dead #{}, :migrated-at "2026-08-10T08:38:17.472604Z"}
+{:ticks 4091, :last-tick "2026-09-08T08:38:05.345333Z", :dead #{}, :migrated-at "2026-08-10T08:38:17.472604Z"}
