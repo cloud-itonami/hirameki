@@ -14,7 +14,7 @@
     G2  a patent is the GATED OBJECT, never a 取-holder — only an assignee/holder imposes
     G3  patent status + assignee share are DISCLOSED facts, never re-judged, never a forecast
   ADR-2606212200 (supersedes 2604251024)."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [clojure.set :as set]
             #?(:clj [hirameki.methods.hirameki-edn :as he])))
 

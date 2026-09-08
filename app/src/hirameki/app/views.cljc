@@ -19,7 +19,7 @@
   aggregate is OF — a share is meaningless without its base, and a top-holder
   table read without its provenance is how a citation-graph neighbourhood gets
   quoted as a fact about an industry."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [jp-go-dds.core :as dds]
             [hirameki.app.route :as route]))
 

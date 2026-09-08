@@ -7,7 +7,7 @@
   run over the concatenated shard text, so they check the same bytes a consumer
   would actually fetch."
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [hirameki.methods.hirameki-edn :as he]
             [hirameki.methods.cid :as cid]
             [hirameki.methods.dataset :as ds]))

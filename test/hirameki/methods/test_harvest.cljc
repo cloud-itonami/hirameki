@@ -13,7 +13,7 @@
   with `:max-seeds` capping the lifetime total — which measured out to a hard
   stop at ~5,000 patents about five weeks away."
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [hirameki.methods.harvest :as h]))
 
 (defn- seed [n] {:id (str "s" n) :query (str "US" n)})

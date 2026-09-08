@@ -33,7 +33,7 @@
   published. This namespace **drops it**. A hirameki row never carries a natural
   person; the assignee is the ORG. That is gate G6, and `corpus-test` asserts a
   journal containing inventors produces rows containing none."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [hirameki.methods.analyze :as a]
             [hirameki.methods.normalize :as nz]))
 
@@ -65,7 +65,7 @@
 
 (defn- jurisdiction [country]
   (when (and country (not (str/blank? country)))
-    (keyword (str/lower-case country))))
+    (keyword (str/lower country))))
 
 ;; ── entity map → hirameki :patent row ────────────────────────────────────────
 
