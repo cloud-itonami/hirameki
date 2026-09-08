@@ -42,7 +42,7 @@
   the derived artifacts. If the operator machine is off, the journal keeps
   growing and the published shards go stale; that is the correct failure, since
   the journal is the record and the shards are derived from it."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [cljs.reader :as edn]
             [hirameki.edge.github :as gh]
             [hirameki.methods.harvest :as h]
@@ -110,7 +110,7 @@
                             (cond
                               (nil? rec)
                               {:seeds (h/drop-seed seeds seed)
-                               :state (h/record-tick state at :dead (str/upper-case (str pid)))
+                               :state (h/record-tick state at :dead (str/upper (str pid)))
                                :new? false :patent-id pid :reason :not-found}
 
                               (contains? entities (:entity rec))
@@ -133,7 +133,7 @@
                                     (.then (fn [_]
                                              {:seeds (h/grow-seeds (h/drop-seed seeds seed)
                                                                    (:citations rec)
-                                                                   (conj known (str/upper-case (str pid)))
+                                                                   (conj known (str/upper (str pid)))
                                                                    {:max-new-seeds-per-tick 10
                                                                     :max-seeds 5000} at)
                                               :state (h/record-tick state at)
