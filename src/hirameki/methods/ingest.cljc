@@ -27,7 +27,7 @@
   shape. The exact JSON field names must be VERIFIED against the live response on the first
   keyed run (the fixture encodes the documented shape); `ingest!` prints a sample so a
   mismatch is caught immediately rather than silently mis-mapped."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [hirameki.methods.analyze :as a]
             [hirameki.methods.normalize :as nz]
             [hirameki.methods.dataset :as ds]
@@ -53,7 +53,7 @@
 (def merge-corpus nz/merge-corpus)
 
 (defn- odp-status->status [s]
-  (let [d (some-> s str/lower-case)]
+  (let [d (some-> s str/lower)]
     (cond
       (nil? d) :pending
       (re-find #"patent(ed)?|granted|issue" d) :granted

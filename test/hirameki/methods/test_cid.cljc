@@ -1,6 +1,6 @@
 (ns hirameki.methods.test-cid
   (:require [clojure.test :refer [deftest is]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [hirameki.methods.cid :as cid]))
 
 (deftest empty-file-known-vector

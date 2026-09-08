@@ -20,7 +20,7 @@
   which is the extraction trigger the skill names. It is deliberately kept
   identical in structure so the extraction is a move, not a rewrite — and it
   does NOT belong in `jp-go-dds`, since routing is neither markup nor CSS."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [jp-go-dds.core :as dds]))
 
 (def views

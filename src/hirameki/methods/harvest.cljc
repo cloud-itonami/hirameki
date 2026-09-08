@@ -34,7 +34,7 @@
 
   Deterministic where it can be: `tick!` takes `retrieved-at` from the caller,
   so a replay writes the same quads."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [toshokan-patents.quad :as quad]
             #?(:clj [toshokan-patents.quad.fs :as qfs])
             [toshokan-patents.sources.google-patents :as gp]
@@ -97,10 +97,10 @@
   rather than against a remembered list of worked seeds is what lets the worked
   list be thrown away."
   [seeds citations known {:keys [max-new-seeds-per-tick max-seeds]} grown-at]
-  (let [queued (into #{} (map (comp str/upper-case str :query)) seeds)
+  (let [queued (into #{} (map (comp str/upper str :query)) seeds)
         room (max 0 (- max-seeds (count seeds)))
         fresh (->> citations
-                   (map str/upper-case)
+                   (map str/upper)
                    (remove str/blank?)
                    (remove #(> (count %) 30))
                    (remove queued)
@@ -109,7 +109,7 @@
                    (take (min max-new-seeds-per-tick room)))]
     (into (vec seeds)
           (map (fn [pid]
-                 {:id (str "cited-" (str/lower-case pid))
+                 {:id (str "cited-" (str/lower pid))
                   :query pid
                   :grown-from "google-patents"
                   :grown-at grown-at}))
@@ -145,7 +145,7 @@
   not only during migration."
   [{:keys [policy seeds]} state harvested-queries]
   (let [done (set (:exhausted state))
-        q-of #(str/upper-case (str (:query %)))
+        q-of #(str/upper (str (:query %)))
         worked (filter #(done (:id %)) seeds)
         dead (into (set (:dead state))
                    (comp (map q-of) (remove harvested-queries))
@@ -202,7 +202,7 @@
 
              (nil? rec)
              {:seeds (drop-seed seeds seed)
-              :state (record-tick state retrieved-at :dead (str/upper-case (str pid)))
+              :state (record-tick state retrieved-at :dead (str/upper (str pid)))
               :new? false :patent-id pid :reason :not-found}
 
              (contains? entities (:entity rec))
@@ -217,7 +217,7 @@
                ;; of a tick does not grow with the size of the corpus.
                (qfs/append-sharded! journal-dir "google-patents" quads)
                {:seeds (grow-seeds (drop-seed seeds seed) (:citations rec)
-                                   (conj known (str/upper-case (str pid))) policy retrieved-at)
+                                   (conj known (str/upper (str pid))) policy retrieved-at)
                 :state (record-tick state retrieved-at)
                 :quads (count quads)
                 :new? true :patent-id pid
@@ -279,7 +279,7 @@
      (let [journal-dir (str (io/file dataset-repo "80-data" "public"))
            _ (.mkdirs (io/file journal-dir))
            harvested (into #{}
-                           (map #(str/upper-case (str/replace (str %) #"^gp:" "")))
+                           (map #(str/upper (str/replace (str %) #"^gp:" "")))
                            (quad/entities (qfs/read-sharded journal-dir "google-patents")))
            {:keys [seeds state dropped]} (migrate-state
                                   (read-edn-file seeds-path {:policy {} :seeds []})

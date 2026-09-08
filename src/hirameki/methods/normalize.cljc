@@ -9,7 +9,7 @@
 
   This namespace exists to break a dependency cycle *and* to make that agreement
   structural: there is one definition, not two that happen to match today."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def ^:private legal-suffixes
   #"\b(inc|incorporated|corp|corporation|co|ltd|limited|llc|gmbh|kk|kabushiki kaisha|ag|sa|plc|nv|oyj|ab)\b")
@@ -58,7 +58,7 @@
     ;; `bare` keeps the placeholders recognizable: slugging first would turn
     ;; `N/A` into `n-a`, which is in no deny list, and a hole in the data would
     ;; start counting as a holder.
-    (let [bare (-> s str/lower-case str/trim
+    (let [bare (-> s str/lower str/trim
                    (str/replace #"[,\.]" "")
                    (str/replace legal-suffixes "")
                    str/trim

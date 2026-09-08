@@ -1,6 +1,6 @@
 (ns hirameki.methods.test-analyze
   (:require [clojure.test :refer [deftest is]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [hirameki.methods.hirameki-edn :as he]
             [hirameki.methods.analyze :as a]))
 
@@ -101,7 +101,7 @@
     (is (str/includes? rep "RELEASE map"))
     (is (str/includes? rep "NOT a target-list"))
     (is (str/includes? rep "NOT an"))           ;; "NOT an infringement/FTO/patentability verdict"
-    (is (not (str/includes? (str/lower-case rep) "infringe this")))))
+    (is (not (str/includes? (str/lower rep) "infringe this")))))
 
 (deftest coverage-nonneg
   (let [c (a/coverage analysis)]

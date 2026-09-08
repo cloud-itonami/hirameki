@@ -1,6 +1,6 @@
 (ns hirameki.methods.test-ingest
   (:require [clojure.test :refer [deftest is]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [hirameki.methods.ingest :as ing]))
 
 ;; A fixture in the documented USPTO ODP `patentFileWrapperDataBag` shape. It deliberately

@@ -1,5 +1,5 @@
 (ns hirameki.methods.test-kotoba
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.lang.text] [clojure.test :refer [deftest is]]
             [clojure.java.io :as io]
             [hirameki.methods.kotoba :as k]))
 
@@ -41,6 +41,6 @@
   (let [t0 (k/make-tx [[:db/add "e" :a 1]] "t0" "as0" "")
         _  (k/append-tx t0 tmp)]
     ;; corrupt the datoms but keep the (now-stale) cid
-    (spit tmp (clojure.string/replace (slurp tmp) "\"e\"" "\"TAMPERED\""))
+    (spit tmp (kotoba.lang.text/replace (slurp tmp) "\"e\"" "\"TAMPERED\""))
     (is (not (:ok (k/verify-chain tmp))))
     (clean!)))
