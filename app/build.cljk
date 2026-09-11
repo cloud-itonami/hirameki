@@ -1,7 +1,7 @@
 #!/usr/bin/env nbb
 ;; build.cljs — render the hirameki console to a single static document.
 ;;
-;;   nbb --classpath "<see app/README.md>" app/build.cljs --dataset ../hirameki-patents
+;;   nbb --classpath "<see app/README.md>" app/build.cljk --dataset ../hirameki-patents
 ;;
 ;; One document, one mount (ADR-2608080100). Every view is rendered here, at
 ;; build time, from the real corpus — so the numbers on the page are the numbers

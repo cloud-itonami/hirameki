@@ -75,7 +75,7 @@ clojure -M:test        # 60 tests / 261 assertions
 
 ```bash
 nbb --classpath "app/src:src:<toshokan-patents>/src:<jp-go-dds>/src:<html>/src:<css>/src" \
-  app/build.cljs --dataset ../hirameki-patents --dds-css <jp-go-dds>/resources/jp_go_dds/dds.css
+  app/build.cljk --dataset ../hirameki-patents --dds-css <jp-go-dds>/resources/jp_go_dds/dds.css
 ```
 
 `jp-go-dds`（デジタル庁デザインシステム）+ `--hig-*` トークン契約。1 文書・1 mount・
@@ -87,8 +87,8 @@ fragment ルーティング（ADR-2608080100）。**5 つの view すべてを�
 
 | ゲート | 何を捕まえるか |
 |---|---|
-| `app/build.cljs` のトークン検査 | 橋渡しに無い `--hig-*` は**無言で何にも解決しない**。ビルドを exit 1 で止める |
-| `app/crossing-test.cljs` | nav が「ルーティング」か「ナビゲーション」かは**ソースからは見分けられない**。`window` に印を置いて 4 回 view を渡り、印が残っているか実測する |
+| `app/build.cljk` のトークン検査 | 橋渡しに無い `--hig-*` は**無言で何にも解決しない**。ビルドを exit 1 で止める |
+| `app/crossing-test.cljk` | nav が「ルーティング」か「ナビゲーション」かは**ソースからは見分けられない**。`window` に印を置いて 4 回 view を渡り、印が残っているか実測する |
 | `design-quality` 監査 | HIG/WCAG の決定論的スコア（実測 100.00 / min 95） |
 
 いずれも「壊すと落ちる」ことを確認済み。

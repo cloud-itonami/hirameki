@@ -3,7 +3,7 @@
   :kotoba.app/version "0.2.0"
   :kotoba.app/components
   [{:name "hirameki"
-    :src "src/hirameki/methods/mesh.clj"
+    :src "src/hirameki/methods/mesh.cljk"
     :scale 1
     :triggers [{:type :kse :topic "etzhayyim/actor/hirameki"}]
     :requires #{:cap/kqe}}]

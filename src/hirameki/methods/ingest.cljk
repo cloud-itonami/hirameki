@@ -183,5 +183,5 @@
          (catch clojure.lang.ExceptionInfo e
            (println "INGEST BLOCKED:" (.getMessage e))
            (println "This is the operator G8/G9 step. Set USPTO_ODP_API_KEY and re-run:")
-           (println "  HIRAMEKI_DATASET_REPO=… USPTO_ODP_API_KEY=… bb src/hirameki/methods/ingest.cljc \"<query>\" 50")
+           (println "  HIRAMEKI_DATASET_REPO=… USPTO_ODP_API_KEY=… bb src/hirameki/methods/ingest.cljk \"<query>\" 50")
            (System/exit 2))))))
