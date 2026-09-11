@@ -318,7 +318,7 @@
    (defn -main
      "CLI: N harvest ticks into the corpus repo.
 
-       clojure -M -m hirameki.methods.harvest --ticks 20 --dataset ../hirameki-patents"
+       kbb -M -m hirameki.methods.harvest --ticks 20 --dataset ../hirameki-patents"
      [& argv]
      (let [argv (vec argv)
            arg (fn [flag dflt] (let [i (.indexOf argv flag)]
