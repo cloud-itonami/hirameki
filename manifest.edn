@@ -33,14 +33,14 @@
   {:n/id "N5" :n/rule "No person/individual inventor data (G6)"}]
 
  :actor/methods
- [{:method/id "hirameki-edn" :method/file "src/hirameki/methods/hirameki_edn.cljc" :method/role "seed loader and classifier"}
-  {:method/id "analyze" :method/file "src/hirameki/methods/analyze.cljc" :method/role "release-map analysis and Datom rendering"}
-  {:method/id "cid" :method/file "src/hirameki/methods/cid.cljc" :method/role "adapter over pinned multiformats-clj"}
-  {:method/id "dataset" :method/file "src/hirameki/methods/dataset.cljc" :method/role "canonical EDN materializer for an explicitly supplied dataset repository"}
-  {:method/id "ingest" :method/file "src/hirameki/methods/ingest.cljc" :method/role "operator-key USPTO ODP ingest into the explicit dataset repository"}
-  {:method/id "kotoba" :method/file "src/hirameki/methods/kotoba.cljc" :method/role "adapter over pinned shared Kotoba Datom ledger"}
-  {:method/id "social" :method/file "src/hirameki/methods/social.cljc" :method/role "adapter over pinned social-publication membrane"}
-  {:method/id "autorun" :method/file "src/hirameki/methods/autorun.cljc" :method/role "idempotent observation heartbeat"}]
+ [{:method/id "hirameki-edn" :method/file "src/hirameki/methods/hirameki_edn.cljk" :method/role "seed loader and classifier"}
+  {:method/id "analyze" :method/file "src/hirameki/methods/analyze.cljk" :method/role "release-map analysis and Datom rendering"}
+  {:method/id "cid" :method/file "src/hirameki/methods/cid.cljk" :method/role "adapter over pinned multiformats-clj"}
+  {:method/id "dataset" :method/file "src/hirameki/methods/dataset.cljk" :method/role "canonical EDN materializer for an explicitly supplied dataset repository"}
+  {:method/id "ingest" :method/file "src/hirameki/methods/ingest.cljk" :method/role "operator-key USPTO ODP ingest into the explicit dataset repository"}
+  {:method/id "kotoba" :method/file "src/hirameki/methods/kotoba.cljk" :method/role "adapter over pinned shared Kotoba Datom ledger"}
+  {:method/id "social" :method/file "src/hirameki/methods/social.cljk" :method/role "adapter over pinned social-publication membrane"}
+  {:method/id "autorun" :method/file "src/hirameki/methods/autorun.cljk" :method/role "idempotent observation heartbeat"}]
 
  :actor/lex
  [{:lex/id "patentObservation"}
@@ -81,10 +81,10 @@
   :cmd "bb test"
   :tests 40
   :assertions 148
-  :suites ["test/hirameki/methods/test_hirameki_edn.cljc" "test/hirameki/methods/test_analyze.cljc"
-           "test/hirameki/methods/test_cid.cljc" "test/hirameki/methods/test_dataset.cljc"
-           "test/hirameki/methods/test_ingest.cljc" "test/hirameki/methods/test_kotoba.cljc"
-           "test/hirameki/methods/test_autorun.cljc" "test/hirameki/methods/test_social.cljc"]}
+  :suites ["test/hirameki/methods/test_hirameki_edn.cljk" "test/hirameki/methods/test_analyze.cljk"
+           "test/hirameki/methods/test_cid.cljk" "test/hirameki/methods/test_dataset.cljk"
+           "test/hirameki/methods/test_ingest.cljk" "test/hirameki/methods/test_kotoba.cljk"
+           "test/hirameki/methods/test_autorun.cljk" "test/hirameki/methods/test_social.cljk"]}
  :substrate {:datasets [{:dataset-id "hirameki-patents"
                          :layer :repo
                          :source "worldwide public-patent KG mirror (USPTO ODP, ADR-2606212200)"
