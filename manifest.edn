@@ -78,7 +78,7 @@
 
  :actor/tests
  {:runner :babashka
-  :cmd "bb test"
+  :cmd "kbb -M:test"
   :tests 40
   :assertions 148
   :suites ["test/hirameki/methods/test_hirameki_edn.cljk" "test/hirameki/methods/test_analyze.cljk"

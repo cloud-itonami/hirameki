@@ -1,7 +1,7 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; crossing-test.cljs — prove the nav ROUTES rather than NAVIGATES.
 ;;
-;;   node scripts/resource-guard.mjs run build -- nbb app/crossing-test.cljk http://127.0.0.1:8731/
+;;   node scripts/resource-guard.mjs run build -- kbb --backend sci app/crossing-test.cljk http://127.0.0.1:8731/
 ;;
 ;; This is the one property of a single-page app that is invisible in the source
 ;; (ADR-2608080100): a nav built from `<a href="#/x">` reads identically whether

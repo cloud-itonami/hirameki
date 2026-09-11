@@ -113,7 +113,7 @@
    (defn -main
      "CLI entry — the observatory runner shape (`manifest/observatories.edn`).
 
-       clojure -M -m hirameki.methods.autorun --cycles 1 --log data/hirameki.datoms.kotoba.edn"
+       kbb -M -m hirameki.methods.autorun --cycles 1 --log data/hirameki.datoms.kotoba.edn"
      [& argv]
      (let [argv (vec argv)
            arg (fn [flag dflt] (let [i (.indexOf argv flag)]

@@ -298,7 +298,7 @@
              (get coverage-map "corpus_have") (get coverage-map "corpus_world_est")
              (get coverage-map "corpus_coverage_rate"))))))
 
-;; ── CLI (bb runner) ──────────────────────────────────────────────────────────
+;; ── CLI (kbb -M:runner) ──────────────────────────────────────────────────────────
 #?(:clj
    (defn -main [& args]
      (let [seed (or (first args) "kotoba/seed.edn")

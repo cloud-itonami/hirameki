@@ -54,17 +54,17 @@ seeds.edn ──► harvest ──► hirameki-patents の journal ──► cor
 
 ```bash
 # 観測 1 beat（observatories.edn の runner がこれを呼ぶ）
-clojure -M -m hirameki.methods.autorun --cycles 1 \
+kbb -M -m hirameki.methods.autorun --cycles 1 \
   --log data/hirameki.datoms.kotoba.edn --dataset ../hirameki-patents
 
 # 収集 20 tick（フロンティアを 20 件歩く）
-clojure -M -m hirameki.methods.harvest --ticks 20 --dataset ../hirameki-patents
+kbb -M -m hirameki.methods.harvest --ticks 20 --dataset ../hirameki-patents
 
 # corpus 成果物を再生成（shard + CID + manifest）
-clojure -M -m hirameki.methods.dataset --dataset ../hirameki-patents --as-of 2026-08-10
+kbb -M -m hirameki.methods.dataset --dataset ../hirameki-patents --as-of 2026-08-10
 
 # テスト
-clojure -M:test        # 60 tests / 261 assertions
+kbb -M:test        # 60 tests / 261 assertions
 ```
 
 **beat は内容で冪等** — datoms が前回と同じ beat は no-op で、台帳は「時計が進んだ」
@@ -74,7 +74,7 @@ clojure -M:test        # 60 tests / 261 assertions
 ## コンソール（single-page app）
 
 ```bash
-nbb --classpath "app/src:src:<toshokan-patents>/src:<jp-go-dds>/src:<html>/src:<css>/src" \
+kbb --backend sci --classpath "app/src:src:<toshokan-patents>/src:<jp-go-dds>/src:<html>/src:<css>/src" \
   app/build.cljk --dataset ../hirameki-patents --dds-css <jp-go-dds>/resources/jp_go_dds/dds.css
 ```
 
