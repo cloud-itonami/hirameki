@@ -38,7 +38,7 @@
             [toshokan-patents.quad :as quad]
             #?(:clj [toshokan-patents.quad.fs :as qfs])
             [toshokan-patents.sources.google-patents :as gp]
-            #?(:clj [clojure.edn :as edn])
+            #?(:clj [kotoba.lang.edn :as edn])
             #?(:clj [clojure.java.io :as io])))
 
 (def default-policy
