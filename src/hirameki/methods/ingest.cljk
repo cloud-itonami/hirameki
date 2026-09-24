@@ -33,7 +33,7 @@
             [hirameki.methods.dataset :as ds]
             #?(:clj [hirameki.methods.hirameki-edn :as he])
             [json.compat :as json]
-            #?(:clj [clojure.java.io :as io]))
+            #?(:clj [kotoba.io :as io]))
   #?(:clj (:import (java.net URI URLEncoder)
                    (java.net.http HttpClient HttpRequest HttpResponse$BodyHandlers)
                    (java.nio.charset StandardCharsets)

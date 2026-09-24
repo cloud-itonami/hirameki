@@ -1,5 +1,5 @@
 (ns hirameki.methods.test-hirameki-edn
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [hirameki.methods.hirameki-edn :as he]))
 
 (def seed "kotoba/seed.edn")

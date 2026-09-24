@@ -15,7 +15,7 @@
     G3  patent status + assignee share are DISCLOSED facts, never re-judged, never a forecast
   ADR-2606212200 (supersedes 2604251024)."
   (:require [kotoba.lang.text :as str]
-            [clojure.set :as set]
+            [kotoba.lang.coll :as set]
             #?(:clj [hirameki.methods.hirameki-edn :as he])))
 
 (def default-ref-year 2026)

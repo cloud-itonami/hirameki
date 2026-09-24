@@ -1,5 +1,5 @@
 (ns hirameki.methods.test-analyze
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.lang.text :as str]
             [hirameki.methods.hirameki-edn :as he]
             [hirameki.methods.analyze :as a]))

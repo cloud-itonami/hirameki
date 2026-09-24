@@ -9,7 +9,7 @@
 
   So these tests read shards back and count. Byte totals and CIDs are not
   evidence of completeness."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.bytes :as kbytes] [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.edn :as edn]
             [hirameki.methods.dataset :as ds]))
 
@@ -43,7 +43,7 @@
 (deftest shards-stay-under-budget
   (doseq [budget [2000 20000]]
     (let [shards (ds/pack rows budget)
-          oversize (remove #(<= (count (.getBytes ^String % "UTF-8")) budget) shards)]
+          oversize (remove #(<= (count (kbytes/utf8-bytes ^String %)) budget) shards)]
       (is (empty? (butlast oversize))
           (str "shards over budget " budget ": " (count oversize))))))
 
@@ -63,5 +63,5 @@
              (get-in man [:artifacts :corpus :rows]))))
     (testing "declared bytes equal the shards' actual bytes"
       (is (= (get-in man [:artifacts :corpus :bytes])
-             (reduce + 0 (map #(count (.getBytes ^String (:content %) "UTF-8"))
+             (reduce + 0 (map #(count (kbytes/utf8-bytes ^String (:content %)))
                               (get-in mat [:corpus :parts]))))))))

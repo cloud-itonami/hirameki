@@ -1,11 +1,11 @@
 (ns hirameki.methods.test-kotoba
-  (:require [kotoba.lang.text] [clojure.test :refer [deftest is]]
-            [clojure.java.io :as io]
+  (:require [kotoba.lang.text] [kotoba.test :refer [deftest is]]
+            [kotoba.io :as io]
             [hirameki.methods.kotoba :as k]))
 
 (def tmp "target/test-ledger.kotoba.edn")
 
-(defn- clean! [] (let [f (io/file tmp)] (when (.exists f) (.delete f))))
+(defn- clean! [] (let [f (io/file tmp)] (when (io/exists? f) (io/delete f))))
 
 (deftest tx-cid-deterministic-and-content-sensitive
   (let [d1 [[:db/add "e" :a 1]]

@@ -3,7 +3,7 @@
 
   The tests that matter here are the ones about what is DROPPED. A harvester
   stores what the page published; the actor must not inherit all of it."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [hirameki.methods.corpus :as c]
             [hirameki.methods.analyze :as a]))
 

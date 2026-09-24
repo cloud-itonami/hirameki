@@ -1,5 +1,5 @@
 (ns hirameki.methods.test-cid
-  (:require [clojure.test :refer [deftest is]]
+  (:require [kotoba.test :refer [deftest is]]
             [kotoba.lang.text :as str]
             [hirameki.methods.cid :as cid]))
 

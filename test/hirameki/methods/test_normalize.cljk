@@ -2,7 +2,7 @@
   "Shared normalizers. Every row source folds through these, so a disagreement
   here shows up as one organization counted twice under two keys."
   (:require [kotoba.lang.edn :as edn]
-            [clojure.test :refer [deftest is testing]]
+            [kotoba.test :refer [deftest is testing]]
             [hirameki.methods.normalize :as nz]))
 
 (deftest a-key-is-always-readable-back
