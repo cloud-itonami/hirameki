@@ -1,6 +1,6 @@
 (ns hirameki.methods.test-autorun
-  (:require [clojure.test :refer [deftest is]]
-            [clojure.java.io :as io]
+  (:require [kotoba.test :refer [deftest is]]
+            [kotoba.io :as io]
             [hirameki.methods.hirameki-edn :as he]
             [hirameki.methods.kotoba :as k]
             [hirameki.methods.autorun :as ar]))
@@ -9,7 +9,7 @@
 (def tmp "target/test-autorun.kotoba.edn")
 (def rows (he/classify (he/load-edn seed)))
 
-(defn- clean! [] (let [f (io/file tmp)] (when (.exists f) (.delete f))))
+(defn- clean! [] (let [f (io/file tmp)] (when (io/exists? f) (io/delete f))))
 
 (deftest beat-persists-and-verifies
   (clean!)

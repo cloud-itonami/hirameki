@@ -6,7 +6,7 @@
   what `ipfs add` produces at exactly that point. The gate assertions below now
   run over the concatenated shard text, so they check the same bytes a consumer
   would actually fetch."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.text :as str]
             [hirameki.methods.hirameki-edn :as he]
             [hirameki.methods.cid :as cid]
