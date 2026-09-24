@@ -10,7 +10,7 @@
   So these tests read shards back and count. Byte totals and CIDs are not
   evidence of completeness."
   (:require [clojure.test :refer [deftest is testing]]
-            [clojure.edn :as edn]
+            [kotoba.lang.edn :as edn]
             [hirameki.methods.dataset :as ds]))
 
 (defn- unpack [shards] (vec (mapcat edn/read-string shards)))

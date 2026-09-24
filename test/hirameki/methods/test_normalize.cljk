@@ -1,7 +1,7 @@
 (ns hirameki.methods.test-normalize
   "Shared normalizers. Every row source folds through these, so a disagreement
   here shows up as one organization counted twice under two keys."
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.lang.edn :as edn]
             [clojure.test :refer [deftest is testing]]
             [hirameki.methods.normalize :as nz]))
 
