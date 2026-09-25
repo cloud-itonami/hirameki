@@ -39,7 +39,7 @@
             #?(:clj [toshokan-patents.quad.fs :as qfs])
             [toshokan-patents.sources.google-patents :as gp]
             #?(:clj [kotoba.lang.edn :as edn])
-            #?(:clj [clojure.java.io :as io])))
+            #?(:clj [kotoba.io :as io])))
 
 (def default-policy
   {:max-new-seeds-per-tick 10
@@ -232,7 +232,7 @@
 #?(:clj
    (defn read-edn-file [path default]
      (let [f (io/file path)]
-       (if (.exists f) (edn/read-string (slurp f)) default))))
+       (if (io/exists? f) (edn/read-string (slurp f)) default))))
 
 (defn render-edn
   "EDN with the seed vector ONE PER LINE, still a single readable form.
@@ -277,7 +277,7 @@
      (when-not (seq dataset-repo)
        (throw (ex-info "dataset repo path required (--dataset or HIRAMEKI_DATASET_REPO)" {})))
      (let [journal-dir (str (io/file dataset-repo "80-data" "public"))
-           _ (.mkdirs (io/file journal-dir))
+           _ (io/mkdirs (io/file journal-dir))
            harvested (into #{}
                            (map #(str/upper (str/replace (str %) #"^gp:" "")))
                            (quad/entities (qfs/read-sharded journal-dir "google-patents")))

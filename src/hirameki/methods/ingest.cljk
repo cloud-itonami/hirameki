@@ -27,14 +27,14 @@
   shape. The exact JSON field names must be VERIFIED against the live response on the first
   keyed run (the fixture encodes the documented shape); `ingest!` prints a sample so a
   mismatch is caught immediately rather than silently mis-mapped."
-  (:require [kotoba.lang.text :as str]
+  (:require [kotoba.http.form-urlencoded :as form-urlencoded] [kotoba.lang.text :as str]
             [hirameki.methods.analyze :as a]
             [hirameki.methods.normalize :as nz]
             [hirameki.methods.dataset :as ds]
             #?(:clj [hirameki.methods.hirameki-edn :as he])
             [json.compat :as json]
             #?(:clj [kotoba.io :as io]))
-  #?(:clj (:import (java.net URI URLEncoder)
+  #?(:clj (:import (java.net URI)
                    (java.net.http HttpClient HttpRequest HttpResponse$BodyHandlers)
                    (java.nio.charset StandardCharsets)
                    (java.time Duration))))
@@ -117,7 +117,7 @@
 
 #?(:clj
    (defn- url-encode [s]
-     (URLEncoder/encode (str s) StandardCharsets/UTF_8)))
+     (form-urlencoded/form-encode (str s))))
 
 #?(:clj
    (defn fetch-odp!

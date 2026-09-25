@@ -13,7 +13,7 @@
   nested values) so every downstream consumer (analyze/dataset/ingest/autorun
   + tests) keeps working against the original bare-key shape unchanged."
   (:require [clojure.edn :as edn]
-            #?(:clj [clojure.java.io :as io])))
+            #?(:clj [kotoba.io :as io])))
 
 (defn- unblob
   "Non-scalar attr values were pr-str'd into a blob string by the datomize pass;
