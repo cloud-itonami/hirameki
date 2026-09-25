@@ -25,7 +25,7 @@
             [hirameki.methods.kotoba :as k]
             #?(:clj [toshokan-patents.quad.fs :as qfs])
             #?(:clj [hirameki.methods.hirameki-edn :as he])
-            #?(:clj [clojure.java.io :as io])))
+            #?(:clj [kotoba.io :as io])))
 
 (defn observation-datoms
   "The full datom set for one beat: curated-field analytics + harvested-corpus
@@ -82,7 +82,7 @@
      [dataset-repo]
      (if (seq dataset-repo)
        (let [d (io/file dataset-repo "80-data" "public")]
-         (if (.isDirectory d)
+         (if (io/directory? d)
            (c/journal->patents (qfs/read-sharded (str d) "google-patents"))
            []))
        [])))
@@ -124,8 +124,8 @@
            seed-path (arg "--seed" "kotoba/seed.edn")
            ref-year (when-let [v (arg "--ref-year" nil)] (Long/parseLong v))]
        (io/make-parents (io/file log-path))
-       (when (and (some #{"--fresh"} argv) (.exists (io/file log-path)))
-         (.delete (io/file log-path)))
+       (when (and (some #{"--fresh"} argv) (io/exists? (io/file log-path)))
+         (io/delete (io/file log-path)))
        (let [res (run-cycles {:cycles cycles :seed-path seed-path :dataset-repo dataset
                               :log-path log-path :ref-year ref-year})]
          (println "# hirameki 閃き — public-patent RELEASE observation (exclusivity → commons)")

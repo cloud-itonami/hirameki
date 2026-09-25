@@ -21,13 +21,13 @@
   block. This takes the second: rows are packed into shards under the limit,
   and the manifest carries a CID per shard. Verification stays a `sha256` of
   bytes you already hold."
-  (:require [hirameki.methods.analyze :as a]
+  (:require [kotoba.bytes :as kbytes] [hirameki.methods.analyze :as a]
             [hirameki.methods.cid :as cid]
             #?(:clj [hirameki.methods.corpus :as corpus])
             #?(:clj [hirameki.methods.normalize :as nz])
             #?(:clj [toshokan-patents.quad.fs :as qfs])
             #?(:clj [hirameki.methods.hirameki-edn :as he])
-            #?(:clj [clojure.java.io :as io])
+            #?(:clj [kotoba.io :as io])
             #?(:clj [clojure.pprint :as pprint])))
 
 (def corpus-dir "corpus")
@@ -43,7 +43,7 @@
   (dissoc p :type :note))
 
 (defn- utf8-count [^String s]
-  #?(:clj (alength (.getBytes s "UTF-8"))
+  #?(:clj (alength (kbytes/utf8-bytes s))
      :cljs (.-length (js/Buffer.from s "utf8"))))
 
 (defn- render [items]
@@ -137,9 +137,9 @@
        ;; that the manifest no longer lists but a gateway would still serve.
        (doseq [d [corpus-dir datoms-dir]]
          (let [sub (io/file dir d)]
-           (when (.isDirectory sub)
-             (doseq [f (.listFiles sub)] (.delete f)))
-           (.mkdirs sub)))
+           (when (io/directory? sub)
+             (doseq [f (io/list-files sub)] (io/delete f)))
+           (io/mkdirs sub)))
        (doseq [[_ {:keys [parts]}] mat
                {:keys [file content]} parts]
          (spit (io/file dir file) content))
@@ -166,7 +166,7 @@
      (when-not (seq dataset-repo)
        (throw (ex-info "dataset repository path required (--dataset or HIRAMEKI_DATASET_REPO)" {})))
      (let [journal-dir (io/file dataset-repo "80-data" "public")
-           harvested (if (.isDirectory journal-dir)
+           harvested (if (io/directory? journal-dir)
                        (corpus/journal->patents (qfs/read-sharded (str journal-dir) "google-patents"))
                        [])
            curated (he/patents seed-path)
