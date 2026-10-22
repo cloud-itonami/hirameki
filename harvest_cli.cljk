@@ -1,0 +1,44 @@
+#!/usr/bin/env kbb
+;; harvest_cli.cljk — the harvest actor's ONLY entry point.
+;;
+;;     kbb harvest_cli.cljk --ticks 20 --dataset ../hirameki-patents
+;;
+;; A script, not the namespace's `-main`: kbb's SCI engine reserves `-main`
+;; unbound in every namespace and the JVM probes `.clj`/`.cljc` only, while
+;; every source here is `.cljk`.
+
+(require '[hirameki.methods.harvest :as h])
+
+(def argv (vec *command-line-args*))
+
+(defn- arg [flag dflt]
+  (let [i (.indexOf (clj->js argv) flag)]
+    (if (>= i 0) (nth argv (inc i) nil) dflt)))
+
+(def ticks (js/parseInt (arg "--ticks" "1") 10))
+
+;; `--ticks abc` is NaN, and every comparison against NaN is false, so
+;; run-ticks!'s guard `(> i ticks)` can never fire and the loop fetches forever,
+;; never writing seeds.edn or state.edn. 0 stays legal ("walk nothing").
+(when (or (js/isNaN ticks) (neg? ticks))
+  (println (str "harvest: --ticks must be a non-negative integer, got "
+                (pr-str (arg "--ticks" nil))))
+  (js/process.exit 2))
+
+;; No guessing from the cwd: this actor WRITES wherever it is pointed. The env
+;; fallback is not local invention — dataset.cljk and autorun.cljk default
+;; --dataset from the same variable.
+(def dataset
+  (or (arg "--dataset" nil)
+      (not-empty (.-HIRAMEKI_DATASET_REPO js/process.env))))
+
+(when (nil? dataset)
+  (println "harvest: --dataset <hirameki-patents checkout> is required")
+  (js/process.exit 2))
+
+(-> (h/run-ticks! {:ticks ticks
+                   :dataset-repo dataset})
+    (.then (fn [r]
+             (println (str "\nharvest: " (:ticks r) " ticks · " (:new r)
+                           " new patents · queue " (:queue r)
+                           " · dead " (:dead r))))))

@@ -16,8 +16,8 @@
   ## What is shared with the operator daemon, and what is not
 
   SHARED — and this is the point: the pure half of the harvest
-  (`hirameki.methods.harvest/next-seed` · `drop-seed` · `defer-seed` ·
-  `grow-seeds` · `record-tick`), the parser
+  (`hirameki.methods.seed/next-seed` · `drop-seed` · `defer-seed` ·
+  `grow-seeds` · `record-tick` · `render-edn` · `now-iso`), the parser
   (`toshokan-patents.sources.google-patents`), and the quad codec
   (`toshokan-patents.quad`) are all `.cljc` and compile here unchanged. The seed
   policy, the citation-growth rule and the journal format are one
@@ -31,7 +31,10 @@
 
   One lookup per tick, sequential, with the same pause between requests. A
   Worker could fan out and will not: the rate is a promise made to the source,
-  not a limit of the machine.
+  not a limit of the machine. The number itself is `seed/default-policy`'s
+  `:inter-request-sleep-ms` — `SLEEP_MS` can only move it away from there, and
+  the corpus timestamp dialect comes from `seed/now-iso`. This file holds no
+  copy of either.
 
   ## What this Worker will NOT do
 
@@ -45,7 +48,7 @@
   (:require [kotoba.lang.text :as str]
             [cljs.reader :as edn]
             [hirameki.edge.github :as gh]
-            [hirameki.methods.harvest :as h]
+            [hirameki.methods.seed :as h]
             [toshokan-patents.quad :as quad]
             [toshokan-patents.sources.google-patents :as gp]))
 
@@ -115,8 +118,7 @@
 
                               (contains? entities (:entity rec))
                               {:seeds (h/grow-seeds (h/drop-seed seeds seed) (:citations rec)
-                                                    known {:max-new-seeds-per-tick 10
-                                                           :max-seeds 5000} at)
+                                                    known h/default-policy at)
                                :state (h/record-tick state at)
                                :new? false :patent-id pid :reason :already-known}
 
@@ -134,8 +136,7 @@
                                              {:seeds (h/grow-seeds (h/drop-seed seeds seed)
                                                                    (:citations rec)
                                                                    (conj known (str/upper (str pid)))
-                                                                   {:max-new-seeds-per-tick 10
-                                                                    :max-seeds 5000} at)
+                                                                   h/default-policy at)
                                               :state (h/record-tick state at)
                                               :new? true :patent-id pid
                                               :quads (count quads)
@@ -152,8 +153,12 @@
                          :new? false :reason :frontier-empty})))
 
 (defn run!
-  "N ticks, then persist the queue and the state once. Promise of a summary."
-  [{:keys [token ticks sleep-ms] :or {ticks 10 sleep-ms 2000}}]
+  "N ticks, then persist the queue and the state once. Promise of a summary.
+
+  `:sleep-ms` is an OVERRIDE, not a default: with no value the gap is
+  `seed/default-policy`'s `:inter-request-sleep-ms`, the same number the
+  operator daemon waits, so there is one owner for the politeness floor."
+  [{:keys [token ticks sleep-ms] :or {ticks 10}}]
   (-> (js/Promise.all
        #js [(read-edn-file token actor-repo seeds-path {:policy {} :seeds []})
             (read-edn-file token actor-repo state-path {:ticks 0})])
@@ -164,15 +169,20 @@
            (letfn [(step [i seeds state]
                      (if (> i ticks)
                        (js/Promise.resolve [seeds state])
+                       ;; `:at` is `seed/now-iso`, the ONE timestamp dialect, shared
+                       ;; with the operator daemon — not a second toISOString.
                        (-> (tick! {:token token :seeds seeds :state state
-                                   :at (.toISOString (js/Date.))})
+                                   :at (h/now-iso)})
                            (.then (fn [r]
                                     (swap! results conj r)
                                     (if (= i ticks)
                                       [(:seeds r) (:state r)]
-                                      ;; pause only BETWEEN requests — the rate is
-                                      ;; a promise to the source, not to the clock
-                                      (-> (sleep sleep-ms)
+                                       ;; pause only BETWEEN requests — the rate
+                                       ;; is a promise to the source, and the
+                                       ;; number is the shared policy's
+                                       (-> (sleep (or sleep-ms
+                                                       (:inter-request-sleep-ms
+                                                        h/default-policy)))
                                           (.then (fn [_] (step (inc i) (:seeds r) (:state r)))))))))))]
              (-> (step 1 seeds0 (:data state-file))
                  (.then
@@ -211,7 +221,8 @@
                     {:missing :github-token})))
   (-> (run! {:token (.-GITHUB_TOKEN env)
              :ticks ticks
-             :sleep-ms (or (some-> (.-SLEEP_MS env) js/parseInt) 2000)})
+             ;; nil when unset, and run! falls back to the shared policy
+             :sleep-ms (some-> (.-SLEEP_MS env) js/parseInt)})
       (.then (fn [r]
                (js/console.log (js/JSON.stringify (clj->js r)))
                r))

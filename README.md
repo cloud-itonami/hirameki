@@ -58,13 +58,13 @@ kbb -M -m hirameki.methods.autorun --cycles 1 \
   --log data/hirameki.datoms.kotoba.edn --dataset ../hirameki-patents
 
 # 収集 20 tick（フロンティアを 20 件歩く）
-kbb -M -m hirameki.methods.harvest --ticks 20 --dataset ../hirameki-patents
+kbb harvest_cli.cljk --ticks 20 --dataset ../hirameki-patents
 
 # corpus 成果物を再生成（shard + CID + manifest）
 kbb -M -m hirameki.methods.dataset --dataset ../hirameki-patents --as-of 2026-08-10
 
-# テスト
-kbb -M:test        # 60 tests / 261 assertions
+# テスト（`kbb -M:test` はこの engine で動かない。test/runner.cljk を使う）
+kbb test/runner.cljk        # 27 tests · 169 assertions
 ```
 
 **beat は内容で冪等** — datoms が前回と同じ beat は no-op で、台帳は「時計が進んだ」

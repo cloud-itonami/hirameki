@@ -1,0 +1,330 @@
+(ns hirameki.methods.test-harvest-loop
+  "`run-ticks!` against a TEMP journal and TEMP state files. No network, no real
+  corpus.
+
+  The load is on the control flow — how many lookups happened, what was written,
+  what a crash left behind — because that is where the 471-tick runaway of
+  2026-10-04 lived and the PURE-helper suite could not see it."
+  (:require [cljs.test :refer [deftest is testing async]]
+            [kotoba.lang.text :as str]
+            ["node:child_process" :as cp]
+            ["node:fs" :as fs]
+            ["node:os" :as os]
+            ["node:path" :as path]
+            [toshokan-patents.quad :as quad]
+            [toshokan-patents.quad.fs :as qfs]
+            [toshokan-patents.sources.google-patents :as gp]
+            [hirameki.methods.harvest :as h]
+            [hirameki.methods.seed :as seed]))
+
+;; ── where this repo is, and how to run its CLI ─────────────────────────────
+;;
+;; Not from `(.cwd js/process)` and not from a bare `"kbb"` on PATH: those are
+;; the caller's, not facts about this code, and the suite failed with six ENOENT
+;; errors from any cwd but the repo root. Both anchors below are facts about THIS
+;; process, so the suite runs the same from anywhere.
+
+(def repo-root
+  (-> (:file (meta #'h/run-ticks!)) path/dirname path/dirname path/dirname path/dirname))
+
+(defn- engine-argv
+  "The ARGS reproducing this process's interpreter invocation —
+  `[nbb/cli.js --classpath <classpath>]` — with every classpath entry made
+  ABSOLUTE, because a relative entry stops resolving the moment the child's cwd
+  is a temp fixture. They resolve against THIS cwd, which is the directory kbb
+  wrote them relative to.
+
+  The interpreter is `(.-execPath js/process)`: the `file`, not an argument.
+  Passing it as one makes node try to parse its own Mach-O binary."
+  []
+  (let [argv (vec (js/Array.from js/process.argv))
+        cp-idx (.indexOf (clj->js argv) "--classpath")
+        base (.cwd js/process)]
+    [(nth argv (dec cp-idx))
+     "--classpath"
+     (->> (.split (str (nth argv (inc cp-idx))) ":")
+          (map #(path/resolve base %))
+          (str/join ":"))]))
+
+;; ── fixtures ─────────────────────────────────────────────────────────────────
+
+(defn- seed [id] {:id (str "s-" id) :query id})
+
+(defn- fixture
+  "A throwaway dataset repo holding one EMPTY journal shard, plus seeds/state
+  files beside it. The empty shard matters: `shard-paths` must be non-empty or
+  `run-ticks!` refuses the dataset, and a fixture starting from nothing would
+  test the refusal instead of the loop."
+  [{:keys [seeds policy]}]
+  (let [root (fs/mkdtempSync (str (path/join (os/tmpdir) "hirameki-loop-")))
+        repo (path/join root "hirameki-patents")
+        journal-dir (path/join repo "80-data" "public")
+        seeds-path (path/join root "seeds.edn")
+        state-path (path/join root "state.edn")]
+    (fs/mkdirSync journal-dir #js {:recursive true})
+    (spit (path/join journal-dir "google-patents.0000.journal.edn") "[]\n")
+    ;; Written through the actor's OWN writer, comments and all, so that a
+    ;; byte-comparison in a test means "the data is unchanged" rather than
+    ;; "the fixture happened to omit the header line".
+    (h/write-edn-file! seeds-path
+                       {:policy (merge seed/default-policy policy) :seeds seeds}
+                       "seeds.edn — pending frontier queue（daemon 管理 + 人手編集）")
+    (h/write-edn-file! state-path {:ticks 0 :last-tick nil :dead #{}}
+                       "state.edn — daemon managed; do not hand-edit.")
+    {:root root :repo repo :journal-dir journal-dir
+     :seeds-path seeds-path :state-path state-path}))
+
+(defn- stub
+  "A `gp/lookup` that resolves to a synthetic record and records every pid it was
+  asked about. `citations` is a function of pid so a test can shape growth."
+  [calls citations]
+  (fn [pid]
+    (swap! calls conj pid)
+    (js/Promise.resolve
+     {:entity (str "gp:" pid)
+      :patent-id pid
+      :source-url (str "https://patents.google.com/patent/" pid)
+      :title (str "Fixture " pid)
+      :citations (citations pid)})))
+
+(defn- with-stub!
+  "Install `f` as `gp/lookup`, run `thunk`, then restore.
+
+  `alter-var-root`, not `with-redefs`: that unbinds when its body RETURNS, and a
+  promise body returns before the later ticks call `lookup` from inside `.then`.
+  And `thunk` is a FUNCTION, not a promise — `run-ticks!` calls `lookup`
+  synchronously, so the stub must be in place before it is evaluated."
+  [f thunk]
+  (let [orig @#'gp/lookup]
+    (alter-var-root #'gp/lookup (constantly f))
+    (-> (thunk)
+        (.then (fn [v] (alter-var-root #'gp/lookup (constantly orig)) v)
+              (fn [e] (alter-var-root #'gp/lookup (constantly orig)) (throw e))))))
+
+(defn- entities [journal-dir]
+  (into #{} (map #(str/replace (str %) #"^gp:" ""))
+        (quad/entities (qfs/read-sharded journal-dir "google-patents"))))
+
+(defn- text [p] (fs/readFileSync p "utf8"))
+
+(defn- run-fixture
+  "The `run-ticks!` call every test below shares, against this fixture's paths."
+  [fx opts]
+  (fn [] (h/run-ticks! (merge {:dataset-repo (:repo fx)
+                               :seeds-path (:seeds-path fx)
+                               :state-path (:state-path fx)}
+                              opts))))
+
+(defn- settle
+  "Run `f`, yielding a Promise whether it RETURNS one or THROWS. `run-ticks!`
+  refuses synchronously, so a refusal is a throw at the call site — without this
+  the refusal tests would blow past their own `.catch` and never call `done`."
+  [f]
+  (try (f)
+       (catch :default e (js/Promise.reject e))))
+
+(defn- finisher
+  "`done`, called at most once — a chain that succeeds and then trips its own
+  `.catch` would otherwise call it twice and corrupt the run's counters."
+  [done]
+  (let [called (atom false)]
+    (fn [] (when (compare-and-set! called false true) (done)))))
+
+(defn- boom [e finish] (is (nil? e) (str "run failed: " e)) (finish))
+
+;; ── the regression: N ticks means N ticks, and then it STOPS ────────────────
+
+(deftest a-run-of-n-ticks-performs-exactly-n-ticks-and-stops
+  (async done
+    (let [finish (finisher done)
+          fx (fixture {:seeds [(seed "US0000001") (seed "US0000002") (seed "US0000003")
+                              (seed "US0000004") (seed "US0000005") (seed "US0000006")]})
+          calls (atom [])]
+      (-> (settle (fn [] (with-stub! (stub calls (fn [_] ["US0000009"]))
+                              (run-fixture fx {:ticks 3}))))
+          (.then (fn [r]
+                   (is (= 3 (:ticks r)) "the run reports 3 ticks")
+                   (is (= 3 (count @calls))
+                       "and it STOPPED — a fourth lookup here IS the runaway bug")
+                   (is (= ["US0000001" "US0000002" "US0000003"] @calls)
+                       "the queue is walked head-first, one lookup per tick")
+                   (is (= #{"US0000001" "US0000002" "US0000003"} (entities (:journal-dir fx)))
+                       "exactly the 3 walked patents are in the journal")
+                   (is (= 3 (:ticks (h/read-edn-file (:state-path fx) nil)))
+                       "the cursor advanced by exactly the ticks performed")
+                   (finish)))
+          (.catch (fn [e] (boom e finish)))))))
+
+;; ── --ticks 0 is a no-op, not a truncation ──────────────────────────────────
+
+(deftest zero-ticks-writes-nothing
+  (async done
+    (let [finish (finisher done)
+          fx (fixture {:seeds [(seed "US0000001") (seed "US0000002")]})
+          seeds0 (text (:seeds-path fx))
+          state0 (text (:state-path fx))
+          calls (atom [])]
+      (-> (settle (fn [] (with-stub! (stub calls (fn [_] ["US0000009"]))
+                              (run-fixture fx {:ticks 0}))))
+          (.then (fn [r]
+                   (is (= 0 (:ticks r)))
+                   (is (empty? @calls) "no lookup happened")
+                   (is (= seeds0 (text (:seeds-path fx))) "seeds.edn unchanged")
+                   (is (= state0 (text (:state-path fx))) "state.edn unchanged")
+                   (finish)))
+          (.catch (fn [e] (boom e finish)))))))
+
+;; ── both refusals: they throw, and the actor's own state is untouched ───────
+
+(deftest a-missing-dataset-is-refused
+  (async done
+    (let [finish (finisher done)
+          fx (fixture {:seeds [(seed "US0000001")]})
+          state0 (text (:state-path fx))
+          seeds0 (text (:seeds-path fx))]
+      (-> (settle (fn [] (h/run-ticks! {:ticks 2
+                                        :seeds-path (:seeds-path fx)
+                                        :state-path (:state-path fx)})))
+          (.then (fn [_]
+                   (is false "a missing dataset must not resolve")
+                   (finish)))
+          (.catch (fn [e]
+                    (is (some? (ex-message e)) "it refuses with an explanation")
+                    (is (= state0 (text (:state-path fx))) "state.edn untouched")
+                    (is (= seeds0 (text (:seeds-path fx))) "seeds.edn untouched")
+                    (finish)))))))
+
+(deftest an-empty-dataset-directory-is-refused-and-creates-no-files
+  (async done
+    (let [finish (finisher done)
+          root (fs/mkdtempSync (str (path/join (os/tmpdir) "hirameki-empty-")))
+          repo (path/join root "patents")
+          fx (fixture {:seeds [(seed "US0000001")]})]
+      (fs/mkdirSync repo #js {:recursive true})
+      (testing "the directory EXISTS but holds no journal — the mistyped-path case"
+        (is (fs/existsSync repo))
+        (-> (settle (run-fixture (assoc fx :repo repo) {:ticks 2}))
+            (.then (fn [_]
+                     (is false "an unread tree must not resolve")
+                     (finish)))
+            (.catch (fn [e]
+                      (is (some? (ex-message e)))
+                      (is (zero? (count (fs/readdirSync repo)))
+                          "and it created nothing on the way to refusing")
+                      (finish))))))))
+
+;; ── the crash-rewind invariant, now enforced rather than asserted in prose ──
+
+(deftest a-crash-after-a-tick-leaves-queue-and-corpus-consistent
+  (async done
+    (let [finish (finisher done)
+          fx (fixture {:seeds [(seed "US0000001") (seed "US0000002") (seed "US0000003")]})
+          calls (atom [])]
+      ;; A crash is exactly this: `tick!` wrote the journal and the caller died
+      ;; before writing seeds/state. `tick!` writes the journal and deliberately
+      ;; does NOT write the queue, so calling it alone reproduces the window.
+      ;; One flat chain, no nested promise inside a `.then`, so `finish` is
+      ;; reached exactly once on every path.
+      (-> (settle (fn [] (with-stub! (stub calls (fn [_] ["US0000009"]))
+                              (fn [] (h/tick! {:journal-dir (:journal-dir fx)
+                                               :seeds (mapv seed ["US0000001" "US0000002"
+                                                                  "US0000003"])
+                                               :state {:ticks 0 :dead #{}}
+                                               :policy seed/default-policy
+                                               :retrieved-at "2026-10-04T00:00:00.000000Z"})))))
+          (.then (fn [_]
+                   (is (= ["US0000001"] @calls) "the crashed tick fetched one patent")
+                   (is (contains? (entities (:journal-dir fx)) "US0000001")
+                       "the journal is AHEAD of the queue, which is the whole hazard")
+                   (is (= 0 (:ticks (h/read-edn-file (:state-path fx) nil)))
+                       "and state.edn never recorded it — the cursor stayed at 0")
+                   ;; now the next run arrives, exactly as a cron would find it
+                   (settle (fn [] (with-stub! (stub calls (fn [_] ["US0000009"]))
+                                       (run-fixture fx {:ticks 2}))))))
+          (.then (fn [r]
+                   (is (= 1 (count (filter #{"US0000001"} @calls)))
+                       "the already-harvested patent is NOT re-fetched")
+                   (is (= 2 (:ticks r)) "the run still did its 2 ticks")
+                   (is (not (some #{"US0000001"}
+                                  (mapv :query (:seeds (h/read-edn-file (:seeds-path fx) nil)))))
+                       "and it is gone from the queue")
+                   (is (contains? (entities (:journal-dir fx)) "US0000001")
+                       "while the corpus still has it — the corpus is the record")
+                   (finish)))
+          (.catch (fn [e] (boom e finish)))))))
+
+;; ── what :max-seeds actually does: bounds the BACKLOG, not the collection ──
+
+(deftest the-ceiling-bounds-the-backlog-not-the-collection
+  (async done
+    (let [finish (finisher done)
+          fx (fixture {:seeds [(seed "US0000001") (seed "US0000002") (seed "US0000003")]
+                       :policy {:max-seeds 3 :max-new-seeds-per-tick 10}})
+          calls (atom [])]
+      (testing "a full queue stops GROWING but harvesting continues"
+        (-> (settle (fn [] (with-stub! (stub calls (fn [_] ["US0000001" "US0000002" "US0000003"
+                                                     "US0000004" "US0000005"]))
+                                (run-fixture fx {:ticks 3}))))
+            (.then (fn [r]
+                     (is (= 3 (:ticks r)) "3 ticks ran even though the queue started full")
+                     (is (= 3 (count @calls))
+                         "every tick still fetched — the ceiling does NOT stop collection")
+                     (let [q (count (:seeds (h/read-edn-file (:seeds-path fx) nil)))]
+                       (is (<= q 3) (str "the queue never exceeded :max-seeds (ended at " q ")"))
+                       (is (pos? q)
+                           (str "and it did not drain to nothing either (ended at " q ")")))
+                     (is (= #{"US0000001" "US0000002" "US0000003"} (entities (:journal-dir fx)))
+                         "all three patents were harvested anyway")
+                     (finish)))
+            (.catch (fn [e] (boom e finish))))))))
+
+;; ── the refusals at the level the CRON sees them: the exit code ─────────────
+;;
+;; The library tests above prove the guards throw. A scheduler does not read an
+;; exception, it reads an exit status, and `harvest_cli.cljk` is what the cron
+;; invokes — so the status itself needs coverage. These assert NONZERO and the
+;; message, not which code: nothing in this repo specifies 1 vs 2, so pinning
+;; that here would only freeze an accident. `cwd` is the fixture, which is what
+;; makes this safe: the real seeds.edn / state.edn sit in this repository.
+
+(defn- cli
+  "Run the real `harvest_cli.cljk` with `args`, from `cwd`. Returns {:status :out}.
+
+  The script is named by ABSOLUTE path while `cwd` is the fixture: a relative
+  name is ENOENT there, and running it with this repo as cwd would let a refusal
+  test WRITE the real seeds.edn and state.edn. The argv must be `clj->js`'d —
+  a Clojure vector is not array-like, and Node's coercion makes kbb print a bare
+  `usage:`, which reads exactly like a refusal."
+  [cwd args]
+  (let [argv (clj->js (into (conj (vec (engine-argv))
+                                 (str (path/join repo-root "harvest_cli.cljk")))
+                            args))
+        r (cp/spawnSync (.-execPath js/process) argv
+                        #js {:cwd cwd :encoding "utf8"})]
+    {:status (.-status r) :out (str (.-stdout r) (.-stderr r))}))
+
+(deftest the-cli-refuses-both-dataset-shapes-with-nonzero-status
+  (async done
+    (let [finish (finisher done)
+          root (fs/mkdtempSync (str (path/join (os/tmpdir) "hirameki-cli-")))
+          empty-repo (path/join root "patents")]
+      (fs/mkdirSync empty-repo #js {:recursive true})
+      (testing "an empty --dataset directory"
+        (let [{:keys [status out]} (cli root ["--ticks" "2" "--dataset" empty-repo])]
+          (is (pos? status) (str "must exit nonzero, got " status))
+          (is (str/includes? out "refusing to treat an unread tree")
+              "and say why, rather than failing obscurely")
+          (is (zero? (count (fs/readdirSync empty-repo))) "creating nothing on the way out")))
+      (testing "--dataset omitted entirely"
+        (let [{:keys [status out]} (cli root ["--ticks" "2"])]
+          (is (pos? status) (str "must exit nonzero, got " status))
+          (is (str/includes? out "--dataset") "and name the flag it wants")))
+      (testing "a non-numeric --ticks cannot start an unbounded fetch loop"
+        (let [{:keys [status out]} (cli root ["--ticks" "abc" "--dataset" empty-repo])]
+          (is (pos? status) (str "must refuse rather than loop, got " status))
+          (is (str/includes? out "--ticks") "and say which flag is wrong")
+          (is (str/includes? out "non-negative integer") "and what it wanted")))
+      (testing "neither refusal left a state file behind"
+        (is (= ["patents"] (vec (fs/readdirSync root)))
+            "the actor wrote seeds.edn/state.edn nowhere"))
+      (finish))))

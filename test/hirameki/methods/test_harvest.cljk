@@ -14,7 +14,7 @@
   stop at ~5,000 patents about five weeks away."
   (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.text :as str]
-            [hirameki.methods.harvest :as h]))
+            [hirameki.methods.seed :as h]))
 
 (defn- seed [n] {:id (str "s" n) :query (str "US" n)})
 (def q3 [(seed 1) (seed 2) (seed 3)])
