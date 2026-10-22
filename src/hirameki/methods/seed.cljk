@@ -1,0 +1,188 @@
+(ns hirameki.methods.seed
+  "The harvest's persistent state, WITHOUT the fetching: the seed frontier, the
+  cursor that walks it, and the shape of the two files both are written in.
+
+  ## Why this is its own namespace
+
+  There is a second, real consumer of all of this: `hirameki.edge.worker`, the
+  Cloudflare Worker on a Cron Trigger (`wrangler.jsonc` — `23 1,7,13,19 * * *`,
+  built to `dist/worker.js`). It runs the same harvest with a different edge —
+  the GitHub contents API instead of a local checkout — and it needs the seed
+  policy, the citation-growth rule and the journal format to be ONE
+  implementation rather than two that drift.
+
+  Those used to live in `hirameki.methods.harvest`, so that Worker reached into a
+  namespace whose actual job is fetching patents over the network, and importing
+  it pulled the network leg along with the arithmetic. Splitting here means the
+  Worker depends on the arithmetic, and `harvest` depends on it too.
+
+  Everything below is PURE: no filesystem, no network. That is what makes the
+  second consumer possible at all — a Cloudflare Worker has no disk and this code
+  compiles unchanged into it. `now-iso` is the one function that reads a clock,
+  and it is here precisely BECAUSE both edges must stamp the same dialect.
+
+  What is deliberately NOT here: `pause`, `tick!`, `run-ticks!` and the file
+  legs. Those are the effectful half and stay in `hirameki.methods.harvest`."
+  (:require [kotoba.lang.text :as str]))
+
+(def default-policy
+  "THE owner of the harvest policy: the frontier ceilings and the politeness
+  floor. Both writers — `harvest/run-ticks!` and `hirameki.edge.worker` — read
+  this map and hold no copy of these numbers."
+  {:max-new-seeds-per-tick 10
+   :max-seeds 5000
+   :inter-request-sleep-ms 2000})
+
+(defn now-iso
+  "UTC ISO-8601 with 6 fractional digits and a `Z`: the shape already in the
+  corpus journal (`retrieved-at \"2026-09-08T00:38:41.704948Z\"`).
+
+  `(.toISOString (js/Date.))` alone is NOT that shape — it emits 3 fractional
+  digits, which would write a second timestamp dialect into a corpus whose
+  86,000 existing datom lines use the 6-digit one. Both edges stamp quads with
+  this, so the dialect has exactly one definition."
+  []
+  (let [iso (.toISOString (js/Date.))]
+    (if (str/ends-with? iso "Z")
+      (str (subs iso 0 (dec (count iso))) "000Z")
+      iso)))
+
+;; ── the frontier is a QUEUE, not an append-only list ────────────────────────
+;;
+;; It used to be a list that only grew, with a parallel `:exhausted` set that
+;; also only grew, and `:max-seeds` capping the LIFETIME number of seeds ever
+;; created. That is the wrong thing to bound, and it put a hard ceiling on the
+;; corpus: measured 2026-08-10 at 1,812 seeds / 688 worked, the cap of 5,000
+;; would have been reached in ~10 days and the loop would have run dry ~26 days
+;; later at ~5,000 patents, permanently. Not a bug — a bound on the wrong noun.
+;;
+;; Now `seeds` holds only what has NOT been worked. A seed is removed when it is
+;; worked, so the queue drains as fast as it fills and `:max-seeds` bounds the
+;; OUTSTANDING frontier, which is what a politeness/memory bound should mean.
+;; Both files stop growing without end, which is also the answer to seeds.edn
+;; being a 206 KB single line rewritten on every tick.
+;;
+;; The only thing that must be remembered forever is which ids are DEAD (404) —
+;; a patent id that does not exist will not exist later either, and without that
+;; memory the citation graph would re-offer it every time it is cited again.
+;; Harvested ids need no memory at all: the corpus itself is the record.
+
+(defn next-seed
+  "The seed at the head of the queue, or nil when the frontier is empty. Pure."
+  [seeds]
+  (first seeds))
+
+(defn drop-seed
+  "Remove `seed` from the queue — it has been worked. Pure."
+  [seeds seed]
+  (vec (remove #(= (:id %) (:id seed)) seeds)))
+
+(defn defer-seed
+  "Move `seed` to the BACK of the queue instead of dropping it.
+
+  For a transient failure (network, rate limit). Rotating rather than leaving it
+  at the head matters: a single id that always fails would otherwise be retried
+  forever at position 0 and the loop would make no progress at all while
+  reporting a healthy exit."
+  [seeds seed]
+  (conj (drop-seed seeds seed) seed))
+
+(defn grow-seeds
+  "Append seeds for the patents `record` cites, bounded by policy. Pure.
+
+  This is what makes the corpus self-growing: every harvested patent hands back
+  the ids it references, and those become the next frontier.
+
+  `known` is every id there is no point queueing — already harvested (taken from
+  the corpus, which is the record) or known dead. Deduping against the corpus
+  rather than against a remembered list of worked seeds is what lets the worked
+  list be thrown away."
+  [seeds citations known {:keys [max-new-seeds-per-tick max-seeds]} grown-at]
+  (let [queued (into #{} (map (comp str/upper str :query)) seeds)
+        room (max 0 (- max-seeds (count seeds)))
+        fresh (->> citations
+                   (map str/upper)
+                   (remove str/blank?)
+                   (remove #(> (count %) 30))
+                   (remove queued)
+                   (remove known)
+                   distinct
+                   (take (min max-new-seeds-per-tick room)))]
+    (into (vec seeds)
+          (map (fn [pid]
+                 {:id (str "cited-" (str/lower pid))
+                  :query pid
+                  :grown-from "google-patents"
+                  :grown-at grown-at}))
+          fresh)))
+
+(defn record-tick
+  "State after one tick. Pure. Keeps counters and the dead set — nothing that
+  grows once per seed ever worked."
+  [state at & {:keys [dead]}]
+  (cond-> (-> state
+              (assoc :last-tick at)
+              (update :ticks (fnil inc 0)))
+    dead (update :dead (fnil conj #{}) dead)))
+
+(defn migrate-state
+  "One-time: the old `{:exhausted #{...}}` shape → the queue shape.
+
+  Two things get removed from the queue, and the second is the one that matters:
+
+  1. seeds named in `:exhausted`. A worked seed whose patent is NOT in the
+     corpus was a 404, so it becomes `:dead` — losing that distinction would
+     make the citation graph re-offer every dead id forever.
+
+  2. **any seed whose patent is already in the corpus**, whatever `:exhausted`
+     says. The original daemon wrote `:exhausted` as `\"source|seed|p1\"` pair
+     keys, not seed ids, so matching on ids alone left ~618 already-harvested
+     seeds in the queue — each of which would burn a tick and a request to learn
+     `already-known`. Deduping against the corpus is both the repair and the
+     rule: the corpus is the record of what has been fetched, so anything in it
+     does not belong in a queue of what to fetch.
+
+  Idempotent, and safe to keep running: (2) is a useful invariant every time,
+  not only during migration."
+  [{:keys [policy seeds]} state harvested-queries]
+  (let [done (set (:exhausted state))
+        q-of #(str/upper (str (:query %)))
+        worked (filter #(done (:id %)) seeds)
+        dead (into (set (:dead state))
+                   (comp (map q-of) (remove harvested-queries))
+                   worked)
+        pending (vec (remove #(or (done (:id %))
+                                  (harvested-queries (q-of %))
+                                  (dead (q-of %)))
+                             seeds))]
+    {:seeds {:policy policy :seeds pending}
+     :state (cond-> (-> state
+                        (dissoc :exhausted :cursor :pages)
+                        (assoc :dead dead))
+              (seq done) (assoc :migrated-at (:last-tick state)))
+     :dropped (- (count seeds) (count pending))}))
+
+(defn render-edn
+  "EDN with the seed vector ONE PER LINE, still a single readable form.
+
+  `seeds.edn` was a single 206 KB line rewritten on every tick — the same shape
+  that made the journal undiffable and its git blobs unreviewable. The queue is
+  bounded now so size is no longer the problem, but a one-line file still makes
+  `git diff` useless on the file that records what the loop is about to do next.
+
+  It stays ONE map so `edn/read-string` reads it unchanged; only the whitespace
+  inside the `:seeds` vector differs.
+
+  **Unconditional, not `:clj`-only.** The Cloudflare Worker writes the same two
+  files through the GitHub API, so a JVM-only writer would mean two formats for
+  one file — and the one that is easier to write is the one-line form this
+  function exists to avoid."
+  [data]
+  (if-let [seeds (:seeds data)]
+    (let [head (pr-str (dissoc data :seeds))]
+      (str (subs head 0 (dec (count head)))            ; drop the closing }
+           (when (> (count head) 2) " ")
+           ":seeds ["
+           (reduce str (map #(str "\n" (pr-str %)) seeds))
+           "\n]}\n"))
+    (str (pr-str data) "\n")))

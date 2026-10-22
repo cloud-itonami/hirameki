@@ -1,0 +1,64 @@
+#!/usr/bin/env kbb
+;; test/runner.cljk — how this repo's tests are run on this engine.
+;;
+;;     kbb test/runner.cljk
+;;
+;; Runs from ANY cwd: the suite anchors the repo root and the engine on facts
+;; about the running process (`(:file (meta #'…))`, `js/process.argv`), never on
+;; `(.cwd js/process)` or a bare `kbb` on PATH. Measured green from the repo
+;; root, from `src/`, from `cloud-itonami/`, and from the workspace root.
+;;
+;; ## Why this exists instead of `kbb -M:test`
+;;
+;; Two independent blockers, neither of them the `:test` alias:
+;;
+;; 1. Its file matcher is the SUFFIX `_test\.(cljk|cljc|cljs|clj)$`; every suite
+;;    here is the PREFIX `test_*.cljk`, so the scan finds nothing. Renaming is
+;;    not cheap — `cljk-origin.edn` and `manifest.edn` pin these exact paths.
+;; 2. Its generated runner calls `(cljs.test/successful? m)`, and `successful?`
+;;    is 0-arity under SCI, which resolves arguments strictly: a hard read
+;;    error, measured 2026-10-04.
+;;
+;; So the suite is driven here: `cljs.test` directly, namespaces as LITERALS
+;; (`ct/run-tests` is a macro — it reads its arguments at read time, so neither
+;; a runtime vector nor `apply` of a quoted list reaches it).
+;;
+;; ## Which suites are listed, and why not all of them
+;;
+;; Five of the thirteen run on this engine. The other eight cannot, for reasons
+;; that predate this work, so they are named rather than silently dropped
+;; (each verified by requiring it alone, 2026-10-04):
+;;
+;;   test-analyze    hirameki-edn/load-edn is `#?(:clj …)` and the suite CALLS it
+;;   test-autorun    at LOAD TIME to build its fixture; test-kotoba likewise
+;;   test-kotoba     calls kotoba/append-tx! at load time
+;;   test-cid        @noble/hashes/sha2.js — multiformats-clj's npm install
+;;   test-dataset    FAILS here (`hashes@2.0.1` is not on the registry), so the
+;;   test-ingest     CID code it needs has no module to load; test-shard too
+;;   test-shard
+;;   test-hirameki-  LOADS, but its subject is the `:clj`-only load-edn: 3 tests
+;;   edn             ERROR. It is a JVM suite.
+;;
+;; Adding a suite means adding it here; if it cannot run, it belongs above.
+
+(require '[cljs.test :as ct])
+
+;; The exit code is computed here rather than from `ct/successful?`, because
+;; that returns true even when `:error` is non-zero — measured 2026-10-04, a run
+;; with 3 errors exited 0. A test runner that cannot fail is worse than none.
+(defmethod ct/report [:cljs.test/default :end-run-tests] [m]
+  (println (str "\n" (:test m) " tests · " (:pass m) " pass · "
+                (:fail m) " fail · " (:error m) " error"))
+  (.exit js/process (if (zero? (+ (or (:fail m) 0) (or (:error m) 0))) 0 1)))
+
+(require 'hirameki.methods.test-harvest)
+(require 'hirameki.methods.test-harvest-loop)
+(require 'hirameki.methods.test-corpus)
+(require 'hirameki.methods.test-normalize)
+(require 'hirameki.methods.test-social)
+
+(ct/run-tests 'hirameki.methods.test-harvest
+              'hirameki.methods.test-harvest-loop
+              'hirameki.methods.test-corpus
+              'hirameki.methods.test-normalize
+              'hirameki.methods.test-social)
